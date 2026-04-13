@@ -1,0 +1,20 @@
+{
+  "name": "vocl",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "format": "prettier --write \"**/*.{ts,vue,js,mjs,cjs,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,vue,js,mjs,cjs,json,yml,yaml}\"",
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
+    "lint:backend": "npm run lint --workspace=backend",
+    "lint:frontend": "npm run lint --workspace=frontend",
+    "test": "npm run test --workspace=backend",
+    "typecheck": "npm run typecheck --workspace=backend && npm run typecheck --workspace=frontend"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}

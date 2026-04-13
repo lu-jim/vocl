@@ -1,0 +1,4 @@
+// Generated after `npm install` / `nuxt prepare` — see https://eslint.nuxt.com
+import withNuxt from './.nuxt/eslint.config.mjs';
+
+export default withNuxt();

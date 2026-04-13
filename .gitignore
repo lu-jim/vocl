@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Backend (Serverless)
+backend/.serverless/
+backend/.esbuild/
+backend/lib/
+
+# Frontend (Nuxt)
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/
+
+# Logs & OS
+*.log
+.DS_Store
+
+# Test / coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/

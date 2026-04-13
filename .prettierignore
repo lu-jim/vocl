@@ -1,0 +1,9 @@
+node_modules
+.nuxt
+.output
+.serverless
+.esbuild
+dist
+lib
+coverage
+package-lock.json
