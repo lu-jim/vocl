@@ -19,6 +19,8 @@ frontend/dist/
 # Logs & OS
 *.log
 .DS_Store
+.ai-logs/
+AGENTS.md
 
 # Test / coverage
 coverage/
