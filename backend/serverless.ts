@@ -9,7 +9,7 @@ import upload from '@functions/upload';
 const stage = '${opt:stage, self:provider.stage}';
 const serviceName = 'vocl';
 
-const serverlessConfiguration: AWS = {
+export const serverlessConfiguration: AWS = {
   service: serviceName,
   frameworkVersion: '3',
   plugins: ['serverless-esbuild'],
@@ -194,5 +194,7 @@ const serverlessConfiguration: AWS = {
     },
   },
 };
+
+export default serverlessConfiguration;
 
 module.exports = serverlessConfiguration;
