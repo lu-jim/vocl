@@ -7,14 +7,15 @@ definePageMeta({
   middleware: 'auth',
 });
 
-const { user, isAuthenticated, logout, isLoading, errorMessage } = useAuth();
+const { user, isAuthenticated, logout, isLoading, lastError } = useAuth();
 
 const displayName = computed(() => {
   if (!user.value) {
     return 'Authenticated user';
   }
 
-  return user.value.signInDetails?.loginId || user.value.username || 'Authenticated user';
+  const signInDetails = user.value.signInDetails as { loginId?: string } | undefined;
+  return signInDetails?.loginId || user.value.username || 'Authenticated user';
 });
 
 const handleLogout = async () => {
@@ -72,10 +73,10 @@ const handleLogout = async () => {
             </div>
 
             <div
-              v-if="errorMessage"
+              v-if="lastError"
               class="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200"
             >
-              {{ errorMessage }}
+              {{ lastError }}
             </div>
           </div>
         </article>
@@ -98,6 +99,8 @@ const handleLogout = async () => {
           </ul>
         </aside>
       </section>
+
+      <AudioUploader />
 
       <section
         class="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30"

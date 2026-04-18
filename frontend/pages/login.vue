@@ -34,7 +34,7 @@
             required
             class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
             placeholder="you@example.com"
-          />
+          >
         </div>
 
         <div>
@@ -57,7 +57,7 @@
             required
             class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
             placeholder="Enter your password"
-          />
+          >
         </div>
 
         <div

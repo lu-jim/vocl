@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxtjs/tailwindcss'],
   runtimeConfig: {
     public: {
+      apiBaseUrl: '',
       awsRegion: '',
       cognitoUserPoolId: '',
       cognitoUserPoolClientId: '',

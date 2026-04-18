@@ -219,9 +219,9 @@ const handleSubmit = async () => {
           <button
             type="submit"
             class="inline-flex w-full items-center justify-center rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="auth.isLoading"
+            :disabled="auth.isLoading.value"
           >
-            {{ auth.isLoading ? 'Creating account...' : 'Create account' }}
+            {{ auth.isLoading.value ? 'Creating account...' : 'Create account' }}
           </button>
         </form>
       </section>

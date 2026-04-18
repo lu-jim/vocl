@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
-import { useAuth } from '../composables/useAuth';
+import { useAuth } from './composables/useAuth';
 
 const auth = useAuth();
 const logoutPending = ref(false);
