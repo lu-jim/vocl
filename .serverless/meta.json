@@ -1,0 +1,16 @@
+{
+  "unknown": {
+    "versionFramework": "3.40.0",
+    "command": [
+      "mcp"
+    ],
+    "options": {
+      "transport": "sse"
+    },
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}
