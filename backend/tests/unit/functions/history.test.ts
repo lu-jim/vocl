@@ -51,6 +51,10 @@ describe('history handler', () => {
 
     expect(result).toEqual({
       statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({
         message: 'Transcription history endpoint stub',
         items: [],
