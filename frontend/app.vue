@@ -6,7 +6,9 @@ import { useAuth } from './composables/useAuth';
 const auth = useAuth();
 
 onMounted(async () => {
-  await auth.loadUser();
+  if (!auth.hasResolvedInitialSession.value && !auth.isLoading.value) {
+    await auth.loadUser();
+  }
 });
 </script>
 

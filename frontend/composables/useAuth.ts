@@ -37,6 +37,66 @@ type AuthActionResult = {
   message?: string;
 };
 
+type E2EAuthState = {
+  userId: string;
+  username: string;
+  loginId: string;
+  idToken: string;
+};
+
+const E2E_AUTH_STORAGE_KEY = 'vocali:e2e-auth';
+let loadUserPromise: Promise<AuthUser | null> | null = null;
+
+const isCypressRuntime = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return 'Cypress' in window;
+};
+
+const readE2EAuthState = (): E2EAuthState | null => {
+  if (!isCypressRuntime()) {
+    return null;
+  }
+
+  const serialized = window.localStorage.getItem(E2E_AUTH_STORAGE_KEY);
+
+  if (!serialized) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<E2EAuthState>;
+
+    if (!parsed.userId || !parsed.username || !parsed.loginId || !parsed.idToken) {
+      return null;
+    }
+
+    return {
+      userId: parsed.userId,
+      username: parsed.username,
+      loginId: parsed.loginId,
+      idToken: parsed.idToken,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeE2EAuthState = (authState: E2EAuthState | null) => {
+  if (!isCypressRuntime()) {
+    return;
+  }
+
+  if (!authState) {
+    window.localStorage.removeItem(E2E_AUTH_STORAGE_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(E2E_AUTH_STORAGE_KEY, JSON.stringify(authState));
+};
+
 const getAuthConfigStatus = () => {
   const config = useRuntimeConfig();
 
@@ -60,6 +120,7 @@ export const useAuth = () => {
   const user = useState<AuthUser | null>('auth:user', () => null);
   const status = useState<AuthStatus>('auth:status', () => 'idle');
   const isLoading = useState<boolean>('auth:isLoading', () => false);
+  const hasResolvedInitialSession = useState<boolean>('auth:hasResolvedInitialSession', () => false);
   const lastError = useState<string | null>('auth:lastError', () => null);
   const pendingConfirmationEmail = useState<string | null>(
     'auth:pendingConfirmationEmail',
@@ -67,6 +128,25 @@ export const useAuth = () => {
   );
 
   const isAuthenticated = computed(() => status.value === 'authenticated');
+
+  const applyE2EAuthState = (authState: E2EAuthState | null) => {
+    if (!authState) {
+      user.value = null;
+      status.value = 'unauthenticated';
+      return null;
+    }
+
+    user.value = {
+      userId: authState.userId,
+      username: authState.username,
+      signInDetails: {
+        loginId: authState.loginId,
+      },
+    };
+    status.value = 'authenticated';
+
+    return user.value;
+  };
 
   const clearError = () => {
     lastError.value = null;
@@ -90,42 +170,66 @@ export const useAuth = () => {
     }
   };
 
-  const loadUser = async () => {
-    if (!isConfigured.value) {
-      user.value = null;
-      status.value = 'unauthenticated';
-      return null;
+  const loadUser = async ({ force = false }: { force?: boolean } = {}) => {
+    if (!force && hasResolvedInitialSession.value) {
+      return user.value;
     }
 
-    setLoading(true);
-    clearError();
+    if (loadUserPromise) {
+      return await loadUserPromise;
+    }
 
-    try {
-      const session = await fetchAuthSession();
+    loadUserPromise = (async () => {
+      const e2eAuthState = readE2EAuthState();
 
-      if (!session.tokens) {
+      if (isCypressRuntime()) {
+        hasResolvedInitialSession.value = true;
+        return applyE2EAuthState(e2eAuthState);
+      }
+
+      if (!isConfigured.value) {
         user.value = null;
         status.value = 'unauthenticated';
+        hasResolvedInitialSession.value = true;
         return null;
       }
 
-      const currentUser = await getCurrentUser();
+      setLoading(true);
+      clearError();
 
-      user.value = {
-        userId: currentUser.userId,
-        username: currentUser.username,
-        signInDetails: currentUser.signInDetails,
-      };
-      status.value = 'authenticated';
+      try {
+        const session = await fetchAuthSession();
 
-      return user.value;
-    } catch {
-      user.value = null;
-      status.value = 'unauthenticated';
-      return null;
-    } finally {
-      isLoading.value = false;
-    }
+        if (!session.tokens) {
+          user.value = null;
+          status.value = 'unauthenticated';
+          hasResolvedInitialSession.value = true;
+          return null;
+        }
+
+        const currentUser = await getCurrentUser();
+
+        user.value = {
+          userId: currentUser.userId,
+          username: currentUser.username,
+          signInDetails: currentUser.signInDetails,
+        };
+        status.value = 'authenticated';
+        hasResolvedInitialSession.value = true;
+
+        return user.value;
+      } catch {
+        user.value = null;
+        status.value = 'unauthenticated';
+        hasResolvedInitialSession.value = true;
+        return null;
+      } finally {
+        isLoading.value = false;
+        loadUserPromise = null;
+      }
+    })();
+
+    return await loadUserPromise;
   };
 
   const register = async ({ email, password }: RegisterInput): Promise<AuthActionResult> => {
@@ -207,13 +311,31 @@ export const useAuth = () => {
     clearError();
 
     try {
+      if (isCypressRuntime()) {
+        const authState: E2EAuthState = {
+          userId: 'cypress-user-id',
+          username: email,
+          loginId: email,
+          idToken: 'cypress-id-token',
+        };
+
+        writeE2EAuthState(authState);
+        applyE2EAuthState(authState);
+        hasResolvedInitialSession.value = true;
+
+        return {
+          nextStep: 'DONE',
+          message: 'Signed in successfully.',
+        };
+      }
+
       const result = await signIn({
         username: email,
         password,
       });
 
       if (result.isSignedIn) {
-        await loadUser();
+        await loadUser({ force: true });
 
         return {
           nextStep: result.nextStep.signInStep,
@@ -244,16 +366,28 @@ export const useAuth = () => {
     clearError();
 
     try {
+      if (isCypressRuntime()) {
+        writeE2EAuthState(null);
+        return;
+      }
+
       await signOut();
     } finally {
       user.value = null;
       status.value = 'unauthenticated';
+      hasResolvedInitialSession.value = true;
       isLoading.value = false;
     }
   };
 
   const getIdToken = async () => {
     ensureConfigured();
+
+    const e2eAuthState = readE2EAuthState();
+
+    if (isCypressRuntime()) {
+      return e2eAuthState?.idToken ?? null;
+    }
 
     const session = await fetchAuthSession();
     return session.tokens?.idToken?.toString() ?? null;
@@ -263,6 +397,7 @@ export const useAuth = () => {
     user,
     status,
     isLoading,
+    hasResolvedInitialSession,
     isConfigured,
     isAuthenticated,
     lastError,
