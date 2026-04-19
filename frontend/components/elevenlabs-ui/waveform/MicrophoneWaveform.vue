@@ -11,6 +11,10 @@ interface Props extends WaveformProps {
   sensitivity?: number
 }
 
+type BrowserWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext
+}
+
 const props = withDefaults(defineProps<Props>(), {
   active: false,
   processing: false,
@@ -123,7 +127,9 @@ watch(() => props.active, (isActive) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.value = stream
 
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      const browserWindow = window as BrowserWindow
+      const AudioContextClass =
+        browserWindow.AudioContext || browserWindow.webkitAudioContext
       const audioContext = new AudioContextClass()
       const analyser = audioContext.createAnalyser()
       analyser.fftSize = props.fftSize
@@ -151,12 +157,12 @@ watch(() => props.active, (isActive) => {
         const normalizedData: number[] = []
 
         for (let i = halfLength - 1; i >= 0; i--) {
-          const value = Math.min(1, (relevantData[i] / 255) * props.sensitivity)
+          const value = Math.min(1, ((relevantData[i] ?? 0) / 255) * props.sensitivity)
           normalizedData.push(value)
         }
 
         for (let i = 0; i < halfLength; i++) {
-          const value = Math.min(1, (relevantData[i] / 255) * props.sensitivity)
+          const value = Math.min(1, ((relevantData[i] ?? 0) / 255) * props.sensitivity)
           normalizedData.push(value)
         }
 

@@ -12,6 +12,10 @@ interface Props extends WaveformProps {
   showHandle?: boolean
 }
 
+type BrowserWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext
+}
+
 const props = withDefaults(defineProps<Props>(), {
   recording: false,
   fftSize: 256,
@@ -76,7 +80,9 @@ watch(() => props.recording, (isRecording) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.value = stream
 
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      const browserWindow = window as BrowserWindow
+      const AudioContextClass =
+        browserWindow.AudioContext || browserWindow.webkitAudioContext
       const audioContext = new AudioContextClass()
       const analyser = audioContext.createAnalyser()
       analyser.fftSize = props.fftSize
@@ -114,7 +120,7 @@ function animate(currentTime: number) {
 
       let sum = 0
       for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i]
+        sum += dataArray[i] ?? 0
       }
       const average = (sum / dataArray.length / 255) * props.sensitivity
 
@@ -126,7 +132,7 @@ function animate(currentTime: number) {
   ctx.clearRect(0, 0, rect.width, rect.height)
 
   const computedBarColor = props.barColor
-    || getComputedStyle(canvas).getPropertyValue('--foreground')
+    || window.getComputedStyle(canvas as unknown as Element).getPropertyValue('--foreground')
     || '#000'
 
   const dataToRender = props.recording ? recordingData.value : recordedData.value
@@ -148,7 +154,7 @@ function animate(currentTime: number) {
     }
 
     for (let i = 0; i < barsVisible && startIndex + i < dataToRender.length; i++) {
-      const value = dataToRender[startIndex + i] || 0.1
+      const value = dataToRender[startIndex + i] ?? 0.1
       const x = i * step
       const barHeight = Math.max(props.barHeight, value * rect.height * 0.7)
       const y = centerY - barHeight / 2
@@ -242,7 +248,7 @@ onMounted(() => {
         ctx.scale(dpr, dpr)
       }
     })
-    resizeObserver.observe(container)
+    resizeObserver.observe(container as unknown as Element)
   }
 
   animationId = requestAnimationFrame(animate)

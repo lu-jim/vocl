@@ -23,10 +23,12 @@ const props = withDefaults(defineProps<WaveformProps>(), {
   barHeight: 4,
   barGap: 2,
   barRadius: 2,
+  barColor: undefined,
   fadeEdges: true,
   fadeWidth: 24,
   height: 128,
   active: false,
+  class: '',
 })
 
 const emit = defineEmits<{
@@ -47,7 +49,7 @@ function renderWaveform() {
   ctx.clearRect(0, 0, rect.width, rect.height)
 
   const computedBarColor = props.barColor
-    || getComputedStyle(canvas).getPropertyValue('--foreground')
+    || window.getComputedStyle(canvas as unknown as Element).getPropertyValue('--foreground')
     || '#000'
 
   const barCount = Math.floor(rect.width / (props.barWidth + props.barGap))
@@ -119,7 +121,7 @@ onMounted(() => {
     }
   })
 
-  resizeObserver.observe(container)
+  resizeObserver.observe(container as unknown as Element)
   renderWaveform()
 })
 
@@ -153,7 +155,7 @@ function handleClick(e: MouseEvent) {
   )
 
   if (dataIndex >= 0 && dataIndex < props.data.length) {
-    emit('barClick', dataIndex, props.data[dataIndex])
+    emit('barClick', dataIndex, props.data[dataIndex] ?? 0)
   }
 }
 </script>

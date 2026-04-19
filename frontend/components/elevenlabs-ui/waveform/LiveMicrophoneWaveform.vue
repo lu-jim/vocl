@@ -17,6 +17,10 @@ interface Props extends Omit<ScrollingWaveformProps, 'barCount'> {
   playbackRate?: number
 }
 
+type BrowserWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext
+}
+
 const props = withDefaults(defineProps<Props>(), {
   active: false,
   fftSize: 256,
@@ -31,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
   fadeEdges: true,
   fadeWidth: 24,
   height: 128,
+  savedHistory: () => [],
   dragOffset: undefined,
   enableAudioPlayback: true,
   playbackRate: 1,
@@ -107,7 +112,9 @@ function playScrubSound(position: number, direction: number) {
     try {
       scrubSource.value.stop()
     }
-    catch {}
+    catch {
+      // Ignore scrub stop races while replacing the preview source.
+    }
   }
 
   const source = audioContextRef.value.createBufferSource()
@@ -140,7 +147,9 @@ function playFromPosition(position: number) {
     try {
       sourceNode.value.stop()
     }
-    catch {}
+    catch {
+      // Ignore playback stop races when restarting from a new position.
+    }
   }
 
   const source = audioContextRef.value.createBufferSource()
@@ -239,7 +248,9 @@ watch(() => props.active, (isActive) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.value = stream
 
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      const browserWindow = window as BrowserWindow
+      const AudioContextClass =
+        browserWindow.AudioContext || browserWindow.webkitAudioContext
       const audioContext = new AudioContextClass()
       const analyser = audioContext.createAnalyser()
       analyser.fftSize = props.fftSize
@@ -290,7 +301,7 @@ function animate(currentTime: number) {
 
       let sum = 0
       for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i]
+        sum += dataArray[i] ?? 0
       }
       const average = (sum / dataArray.length / 255) * props.sensitivity
 
@@ -306,7 +317,7 @@ function animate(currentTime: number) {
   ctx.clearRect(0, 0, rect.width, rect.height)
 
   const computedBarColor = props.barColor
-    || getComputedStyle(canvas).getPropertyValue('--foreground')
+    || window.getComputedStyle(canvas as unknown as Element).getPropertyValue('--foreground')
     || '#000'
 
   const step = props.barWidth + props.barGap
@@ -399,7 +410,7 @@ onMounted(() => {
         ctx.scale(dpr, dpr)
       }
     })
-    resizeObserver.observe(container)
+    resizeObserver.observe(container as unknown as Element)
   }
 
   animationId = requestAnimationFrame(animate)
@@ -427,11 +438,15 @@ onUnmounted(() => {
   }
   if (sourceNode.value) {
     try { sourceNode.value.stop() }
-    catch {}
+    catch {
+      // Ignore teardown races if the source has already ended.
+    }
   }
   if (scrubSource.value) {
     try { scrubSource.value.stop() }
-    catch {}
+    catch {
+      // Ignore teardown races if the scrub source has already ended.
+    }
   }
 
   document.removeEventListener('mousemove', handleMouseMove)
@@ -512,7 +527,9 @@ function handleMouseUp() {
 
     if (scrubSource.value) {
       try { scrubSource.value.stop() }
-      catch {}
+      catch {
+        // Ignore scrub stop races on mouse release.
+      }
     }
   }
 }

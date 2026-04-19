@@ -22,9 +22,11 @@ const props = withDefaults(defineProps<{
   barHeight: 4,
   barGap: 2,
   barRadius: 2,
+  barColor: undefined,
   fadeEdges: true,
   fadeWidth: 24,
   height: 128,
+  class: '',
 })
 
 const data = computed(() => {

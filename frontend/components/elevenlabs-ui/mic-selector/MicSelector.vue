@@ -21,7 +21,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: undefined,
   muted: undefined,
+  class: '',
 })
 
 const emit = defineEmits<{
@@ -55,7 +57,7 @@ const isMuted = computed({
 // Select first device by default
 watch(devices, (newDevices) => {
   if (!selectedDevice.value && newDevices.length > 0) {
-    selectedDevice.value = newDevices[0].deviceId
+    selectedDevice.value = newDevices[0]?.deviceId ?? ''
   }
 }, { immediate: true })
 

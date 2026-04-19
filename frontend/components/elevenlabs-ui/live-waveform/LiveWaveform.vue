@@ -26,12 +26,18 @@ interface LiveWaveformProps extends /* @vue-ignore */ HTMLAttributes {
 
 }
 
+type BrowserWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext
+}
+
 const props = withDefaults(defineProps<LiveWaveformProps>(), {
   active: false,
   processing: false,
+  deviceId: undefined,
   barWidth: 3,
   barGap: 1,
   barRadius: 1.5,
+  barColor: undefined,
   fadeEdges: true,
   fadeWidth: 24,
   barHeight: 4,
@@ -42,6 +48,7 @@ const props = withDefaults(defineProps<LiveWaveformProps>(), {
   historySize: 60,
   updateRate: 30,
   mode: 'static',
+  class: '',
 })
 
 const emit = defineEmits<{
@@ -99,7 +106,7 @@ onMounted(() => {
     audioState.needsRedraw = true
   })
 
-  resizeObserver.observe(container)
+  resizeObserver.observe(container as unknown as Element)
 
   onUnmounted(() => {
     resizeObserver.disconnect()
@@ -254,7 +261,9 @@ watch(() => [props.active, props.deviceId], async () => {
     audioState.stream = stream
     emit('stream-ready', stream)
 
-    const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext
+    const browserWindow = window as BrowserWindow
+    const AudioContextConstructor =
+      browserWindow.AudioContext || browserWindow.webkitAudioContext
     const audioContext = new AudioContextConstructor()
     const analyser = audioContext.createAnalyser()
     analyser.fftSize = props.fftSize
@@ -305,12 +314,12 @@ onMounted(() => {
           // Mirror data
           for (let i = halfCount - 1; i >= 0; i--) {
             const dataIndex = Math.floor((i / halfCount) * relevantData.length)
-            const value = Math.min(1, (relevantData[dataIndex] / 255) * props.sensitivity)
+            const value = Math.min(1, ((relevantData[dataIndex] ?? 0) / 255) * props.sensitivity)
             newBars.push(Math.max(0.05, value))
           }
           for (let i = 0; i < halfCount; i++) {
             const dataIndex = Math.floor((i / halfCount) * relevantData.length)
-            const value = Math.min(1, (relevantData[dataIndex] / 255) * props.sensitivity)
+            const value = Math.min(1, ((relevantData[dataIndex] ?? 0) / 255) * props.sensitivity)
             newBars.push(Math.max(0.05, value))
           }
 
@@ -325,7 +334,7 @@ onMounted(() => {
           const relevantData = dataArray.slice(startFreq, endFreq)
 
           for (let i = 0; i < relevantData.length; i++) {
-            sum += relevantData[i]
+            sum += relevantData[i] ?? 0
           }
           const average = (sum / relevantData.length / 255) * props.sensitivity
 
@@ -347,7 +356,7 @@ onMounted(() => {
       ctx.clearRect(0, 0, rect.width, rect.height)
 
       const computedBarColor = props.barColor || (() => {
-        const style = getComputedStyle(canvas)
+        const style = window.getComputedStyle(canvas as unknown as Element)
         return style.color || '#000'
       })()
 

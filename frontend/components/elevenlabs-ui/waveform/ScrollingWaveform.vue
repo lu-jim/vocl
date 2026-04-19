@@ -10,15 +10,18 @@ export interface ScrollingWaveformProps extends Omit<WaveformProps, 'data'> {
 }
 
 const props = withDefaults(defineProps<ScrollingWaveformProps>(), {
+  data: () => [],
   speed: 50,
   barCount: 60,
   barWidth: 4,
   barHeight: 4,
   barGap: 2,
   barRadius: 2,
+  barColor: undefined,
   fadeEdges: true,
   fadeWidth: 24,
   height: 128,
+  class: '',
 })
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -44,14 +47,17 @@ function animate(currentTime: number) {
   ctx.clearRect(0, 0, rect.width, rect.height)
 
   const computedBarColor = props.barColor
-    || getComputedStyle(canvas).getPropertyValue('--foreground')
+    || window.getComputedStyle(canvas as unknown as Element).getPropertyValue('--foreground')
     || '#000'
 
   const step = props.barWidth + props.barGap
 
   // Update positions
   for (let i = 0; i < bars.value.length; i++) {
-    bars.value[i].x -= props.speed * deltaTime
+    const bar = bars.value[i]
+    if (bar) {
+      bar.x -= props.speed * deltaTime
+    }
   }
 
   // Remove off-screen bars
@@ -60,7 +66,7 @@ function animate(currentTime: number) {
   // Add new bars
   while (
     bars.value.length === 0
-    || bars.value[bars.value.length - 1].x < rect.width
+    || (bars.value[bars.value.length - 1]?.x ?? rect.width) < rect.width
   ) {
     const lastBar = bars.value[bars.value.length - 1]
     const nextX = lastBar ? lastBar.x + step : rect.width
@@ -174,7 +180,7 @@ onMounted(() => {
         }
       }
     })
-    resizeObserver.observe(container)
+    resizeObserver.observe(container as unknown as Element)
   }
 
   animationId = requestAnimationFrame(animate)
