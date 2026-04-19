@@ -22,6 +22,11 @@ type HistoryResponse = {
   nextCursor: string | null;
 };
 
+type TranscriptModalState = {
+  filename: string;
+  content: string;
+};
+
 const auth = useAuth();
 const runtimeConfig = useRuntimeConfig();
 const apiBaseUrl = computed(() => runtimeConfig.public.apiBaseUrl.replace(/\/$/, ''));
@@ -31,8 +36,10 @@ const nextCursor = ref<string | null>(null);
 const previousCursors = ref<Array<string | null>>([]);
 const isLoading = ref(false);
 const transcriptionInFlightId = ref<string | null>(null);
+const transcriptActionId = ref<string | null>(null);
 const errorMessage = ref('');
 const successMessage = ref('');
+const transcriptModal = ref<TranscriptModalState | null>(null);
 const pageSize = 10;
 const HISTORY_POLL_INTERVAL_MS = 5000;
 
@@ -70,6 +77,14 @@ const formattedDate = (value: string) => {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
+};
+
+const getTranscriptFilename = (filename: string) => {
+  const sanitized = filename.replace(/[^a-zA-Z0-9._-]+/g, '-');
+  const lastDotIndex = sanitized.lastIndexOf('.');
+  const basename = lastDotIndex > 0 ? sanitized.slice(0, lastDotIndex) : sanitized;
+
+  return `${basename || 'transcript'}.txt`;
 };
 
 const getAuthToken = async () => {
@@ -165,6 +180,63 @@ const startTranscription = async (item: HistoryItem) => {
   } finally {
     transcriptionInFlightId.value = null;
   }
+};
+
+const fetchTranscript = async (item: HistoryItem, disposition: 'inline' | 'attachment') => {
+  if (!apiBaseUrl.value || transcriptActionId.value) {
+    return;
+  }
+
+  transcriptActionId.value = item.transcriptionId;
+  errorMessage.value = '';
+
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(
+      `${apiBaseUrl.value}/download/${encodeURIComponent(item.transcriptionId)}?disposition=${disposition}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const content = await response.text();
+
+    if (!response.ok) {
+      throw new Error(content || 'Could not load the transcript.');
+    }
+
+    if (disposition === 'inline') {
+      transcriptModal.value = {
+        filename: item.filename,
+        content,
+      };
+
+      return;
+    }
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = getTranscriptFilename(item.filename);
+    link.click();
+    URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(error, 'Could not load the transcript.');
+  } finally {
+    transcriptActionId.value = null;
+  }
+};
+
+const viewTranscript = async (item: HistoryItem) => {
+  await fetchTranscript(item, 'inline');
+};
+
+const downloadTranscript = async (item: HistoryItem) => {
+  await fetchTranscript(item, 'attachment');
 };
 
 const goToPreviousPage = async () => {
@@ -298,14 +370,20 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
-                disabled
+                :disabled="item.status !== 'completed' || Boolean(transcriptActionId)"
+                @click="viewTranscript(item)"
               >
-                View
+                {{
+                  transcriptActionId === item.transcriptionId && item.status === 'completed'
+                    ? 'Loading...'
+                    : 'View'
+                }}
               </button>
               <button
                 type="button"
                 class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
-                disabled
+                :disabled="item.status !== 'completed' || Boolean(transcriptActionId)"
+                @click="downloadTranscript(item)"
               >
                 Download
               </button>
@@ -357,6 +435,35 @@ onBeforeUnmount(() => {
           </button>
         </footer>
       </section>
+
+      <div
+        v-if="transcriptModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-6 py-10"
+      >
+        <div
+          class="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-slate-950/60"
+        >
+          <div class="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+            <div>
+              <h2 class="text-lg font-semibold text-white">Transcript preview</h2>
+              <p class="text-sm text-slate-400">{{ transcriptModal.filename }}</p>
+            </div>
+            <button
+              type="button"
+              class="rounded-lg border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
+              @click="transcriptModal = null"
+            >
+              Close
+            </button>
+          </div>
+
+          <div class="overflow-auto px-6 py-5">
+            <pre class="whitespace-pre-wrap break-words text-sm leading-6 text-slate-200">{{
+              transcriptModal.content
+            }}</pre>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </template>

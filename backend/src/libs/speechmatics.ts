@@ -138,3 +138,23 @@ export const getBatchTranscriptionJob = async (jobId: string) => {
       typeof job.errors?.[0]?.message === 'string' ? job.errors[0].message : undefined,
   };
 };
+
+export const getBatchTranscriptionTranscript = async (jobId: string, format = 'txt') => {
+  const response = await fetch(
+    `${getSpeechmaticsApiBaseUrl()}/jobs/${jobId}/transcript?format=${encodeURIComponent(format)}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${getSpeechmaticsApiKey()}`,
+      },
+    }
+  );
+
+  const body = await response.text();
+
+  if (!response.ok) {
+    throw new Error(body || 'Could not load the Speechmatics transcript.');
+  }
+
+  return body;
+};

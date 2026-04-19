@@ -28,6 +28,9 @@ describe('serverless configuration', () => {
     const transcribeEvents = (serverlessConfiguration.functions?.transcribe as {
       events?: unknown[];
     })?.events;
+    const downloadEvents = (serverlessConfiguration.functions?.download as {
+      events?: unknown[];
+    })?.events;
 
     expect(uploadEvents).toEqual(
       expect.arrayContaining([
@@ -58,6 +61,20 @@ describe('serverless configuration', () => {
     );
 
     expect(transcribeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          http: expect.objectContaining({
+            authorizer: expect.objectContaining({
+              name: 'VoclCognitoAuthorizer',
+              type: 'COGNITO_USER_POOLS',
+              arn: { 'Fn::GetAtt': ['CognitoUserPool', 'Arn'] },
+            }),
+          }),
+        }),
+      ])
+    );
+
+    expect(downloadEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           http: expect.objectContaining({

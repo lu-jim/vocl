@@ -1,4 +1,8 @@
-import { getBatchTranscriptionJob, submitBatchTranscription } from '@libs/speechmatics';
+import {
+  getBatchTranscriptionJob,
+  getBatchTranscriptionTranscript,
+  submitBatchTranscription,
+} from '@libs/speechmatics';
 
 describe('submitBatchTranscription', () => {
   const fetchMock = jest.fn();
@@ -104,6 +108,26 @@ describe('submitBatchTranscription', () => {
     });
     expect(fetchMock).toHaveBeenCalledWith(
       'https://eu1.asr.api.speechmatics.com/v2/jobs/sm-job-123',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer speechmatics-secret',
+        },
+      }
+    );
+  });
+
+  it('fetches the plain text transcript for a completed job', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      text: async () => 'Hello from Speechmatics.',
+    });
+
+    const result = await getBatchTranscriptionTranscript('sm-job-123');
+
+    expect(result).toBe('Hello from Speechmatics.');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://eu1.asr.api.speechmatics.com/v2/jobs/sm-job-123/transcript?format=txt',
       {
         method: 'GET',
         headers: {
