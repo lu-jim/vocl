@@ -30,8 +30,13 @@ const page = ref(1);
 const nextCursor = ref<string | null>(null);
 const previousCursors = ref<Array<string | null>>([]);
 const isLoading = ref(false);
+const transcriptionInFlightId = ref<string | null>(null);
 const errorMessage = ref('');
+const successMessage = ref('');
 const pageSize = 10;
+const HISTORY_POLL_INTERVAL_MS = 5000;
+
+let historyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 const paginatedItems = computed(() => items.value);
 
@@ -45,6 +50,21 @@ const statusClasses: Record<string, string> = {
   failed: 'bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-500/30',
 };
 
+const clearHistoryRefreshTimer = () => {
+  if (historyRefreshTimer) {
+    clearTimeout(historyRefreshTimer);
+    historyRefreshTimer = null;
+  }
+};
+
+const currentCursor = computed(() => {
+  return page.value > 1 ? previousCursors.value.at(-1) ?? null : null;
+});
+
+const hasProcessingItems = computed(() => {
+  return items.value.some((item) => item.status === 'processing');
+});
+
 const formattedDate = (value: string) => {
   return new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
@@ -52,8 +72,35 @@ const formattedDate = (value: string) => {
   }).format(new Date(value));
 };
 
-const loadHistory = async (cursor: string | null = null) => {
+const getAuthToken = async () => {
+  const token = await auth.getIdToken();
+
+  if (!token) {
+    throw new Error('Sign in again before continuing.');
+  }
+
+  return token;
+};
+
+const scheduleHistoryRefresh = () => {
+  clearHistoryRefreshTimer();
+
+  if (!hasProcessingItems.value) {
+    return;
+  }
+
+  historyRefreshTimer = setTimeout(() => {
+    void loadHistory(currentCursor.value, true);
+  }, HISTORY_POLL_INTERVAL_MS);
+};
+
+const loadHistory = async (cursor: string | null = null, preserveSuccessMessage = false) => {
+  clearHistoryRefreshTimer();
   errorMessage.value = '';
+
+  if (!preserveSuccessMessage) {
+    successMessage.value = '';
+  }
 
   if (!apiBaseUrl.value) {
     errorMessage.value = 'Set NUXT_PUBLIC_API_BASE_URL before loading your history.';
@@ -63,12 +110,7 @@ const loadHistory = async (cursor: string | null = null) => {
   isLoading.value = true;
 
   try {
-    const token = await auth.getIdToken();
-
-    if (!token) {
-      errorMessage.value = 'Sign in again before loading your history.';
-      return;
-    }
+    const token = await getAuthToken();
 
     const response = await $fetch<HistoryResponse>(`${apiBaseUrl.value}/transcriptions`, {
       method: 'GET',
@@ -83,6 +125,7 @@ const loadHistory = async (cursor: string | null = null) => {
 
     items.value = response.items;
     nextCursor.value = response.nextCursor;
+    scheduleHistoryRefresh();
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,
@@ -90,6 +133,37 @@ const loadHistory = async (cursor: string | null = null) => {
     );
   } finally {
     isLoading.value = false;
+  }
+};
+
+const startTranscription = async (item: HistoryItem) => {
+  if (!apiBaseUrl.value || transcriptionInFlightId.value) {
+    return;
+  }
+
+  transcriptionInFlightId.value = item.transcriptionId;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  try {
+    const token = await getAuthToken();
+
+    await $fetch(`${apiBaseUrl.value}/transcribe`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        transcriptionId: item.transcriptionId,
+      },
+    });
+
+    successMessage.value = `Started transcription for ${item.filename}.`;
+    await loadHistory(page.value > 1 ? previousCursors.value.at(-1) ?? null : null);
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(error, 'Could not start the transcription job.');
+  } finally {
+    transcriptionInFlightId.value = null;
   }
 };
 
@@ -116,6 +190,10 @@ const goToNextPage = async () => {
 
 onMounted(async () => {
   await loadHistory();
+});
+
+onBeforeUnmount(() => {
+  clearHistoryRefreshTimer();
 });
 </script>
 
@@ -177,6 +255,13 @@ onMounted(async () => {
           {{ errorMessage }}
         </div>
 
+        <div
+          v-if="successMessage"
+          class="border-b border-emerald-500/20 bg-emerald-500/10 px-6 py-4 text-sm text-emerald-200"
+        >
+          {{ successMessage }}
+        </div>
+
         <div v-if="isLoading && paginatedItems.length === 0" class="px-6 py-12 text-center">
           <p class="text-base font-medium text-slate-200">Loading your history...</p>
           <p class="mt-2 text-sm text-slate-400">
@@ -223,6 +308,19 @@ onMounted(async () => {
                 disabled
               >
                 Download
+              </button>
+              <button
+                v-if="item.status === 'uploaded'"
+                type="button"
+                class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="Boolean(transcriptionInFlightId)"
+                @click="startTranscription(item)"
+              >
+                {{
+                  transcriptionInFlightId === item.transcriptionId
+                    ? 'Starting...'
+                    : 'Start transcription'
+                }}
               </button>
             </div>
           </article>

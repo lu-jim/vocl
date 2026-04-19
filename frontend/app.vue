@@ -13,63 +13,75 @@
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-          <template v-if="isLoading">
-            <span
-              class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-slate-300"
-            >
-              Checking session...
-            </span>
-          </template>
+        <ClientOnly>
+          <div class="flex flex-wrap items-center gap-3 text-sm">
+            <template v-if="isLoading">
+              <span
+                class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-slate-300"
+              >
+                Checking session...
+              </span>
+            </template>
 
-          <template v-else-if="isAuthenticated">
-            <span
-              class="inline-flex items-center rounded-full border border-emerald-800 bg-emerald-950/70 px-3 py-1 text-emerald-300"
-            >
-              Signed in{{ userLabel ? ` as ${userLabel}` : '' }}
-            </span>
+            <template v-else-if="isAuthenticated">
+              <span
+                class="inline-flex items-center rounded-full border border-emerald-800 bg-emerald-950/70 px-3 py-1 text-emerald-300"
+              >
+                Signed in{{ userLabel ? ` as ${userLabel}` : '' }}
+              </span>
 
-            <nav class="flex flex-wrap items-center gap-2">
-              <NuxtLink
-                to="/dashboard"
-                class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
-              >
-                Dashboard
-              </NuxtLink>
-              <NuxtLink
-                to="/history"
-                class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
-              >
-                History
-              </NuxtLink>
-              <button
-                type="button"
-                class="rounded-lg bg-cyan-500 px-3 py-2 font-medium text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
-                :disabled="logoutPending"
-                @click="handleLogout"
-              >
-                {{ logoutPending ? 'Signing out...' : 'Logout' }}
-              </button>
-            </nav>
-          </template>
+              <nav class="flex flex-wrap items-center gap-2">
+                <NuxtLink
+                  to="/dashboard"
+                  class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
+                >
+                  Dashboard
+                </NuxtLink>
+                <NuxtLink
+                  to="/history"
+                  class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
+                >
+                  History
+                </NuxtLink>
+                <button
+                  type="button"
+                  class="rounded-lg bg-cyan-500 px-3 py-2 font-medium text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="logoutPending"
+                  @click="handleLogout"
+                >
+                  {{ logoutPending ? 'Signing out...' : 'Logout' }}
+                </button>
+              </nav>
+            </template>
 
-          <template v-else>
-            <nav class="flex flex-wrap items-center gap-2">
-              <NuxtLink
-                to="/login"
-                class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
+            <template v-else>
+              <nav class="flex flex-wrap items-center gap-2">
+                <NuxtLink
+                  to="/login"
+                  class="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 transition hover:border-cyan-500 hover:text-white"
+                >
+                  Login
+                </NuxtLink>
+                <NuxtLink
+                  to="/register"
+                  class="rounded-lg bg-cyan-500 px-3 py-2 font-medium text-slate-950 transition hover:bg-cyan-400"
+                >
+                  Register
+                </NuxtLink>
+              </nav>
+            </template>
+          </div>
+
+          <template #fallback>
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+              <span
+                class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-slate-300"
               >
-                Login
-              </NuxtLink>
-              <NuxtLink
-                to="/register"
-                class="rounded-lg bg-cyan-500 px-3 py-2 font-medium text-slate-950 transition hover:bg-cyan-400"
-              >
-                Register
-              </NuxtLink>
-            </nav>
+                Checking session...
+              </span>
+            </div>
           </template>
-        </div>
+        </ClientOnly>
       </header>
 
       <main class="flex-1">
