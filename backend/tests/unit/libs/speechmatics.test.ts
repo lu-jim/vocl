@@ -1,4 +1,5 @@
 import {
+  createRealtimeTranscriptionToken,
   getBatchTranscriptionJob,
   getBatchTranscriptionTranscript,
   submitBatchTranscription,
@@ -135,5 +136,32 @@ describe('submitBatchTranscription', () => {
         },
       }
     );
+  });
+
+  it('creates a realtime token for browser sessions', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        key_value: 'temporary-jwt',
+      }),
+    });
+
+    const result = await createRealtimeTranscriptionToken(120);
+
+    expect(result).toEqual({
+      key: 'temporary-jwt',
+      expiresInSeconds: 120,
+      websocketUrl: 'wss://eu.rt.speechmatics.com/v2?jwt=temporary-jwt',
+    });
+    expect(fetchMock).toHaveBeenCalledWith('https://mp.speechmatics.com/v1/api_keys?type=rt', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer speechmatics-secret',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ttl: 120,
+      }),
+    });
   });
 });

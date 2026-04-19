@@ -18,6 +18,7 @@ describe('serverless configuration', () => {
         transcribe: expect.any(Object),
         history: expect.any(Object),
         download: expect.any(Object),
+        realtimeToken: expect.any(Object),
       })
     );
   });
@@ -29,6 +30,9 @@ describe('serverless configuration', () => {
       events?: unknown[];
     })?.events;
     const downloadEvents = (serverlessConfiguration.functions?.download as {
+      events?: unknown[];
+    })?.events;
+    const realtimeTokenEvents = (serverlessConfiguration.functions?.realtimeToken as {
       events?: unknown[];
     })?.events;
 
@@ -75,6 +79,20 @@ describe('serverless configuration', () => {
     );
 
     expect(downloadEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          http: expect.objectContaining({
+            authorizer: expect.objectContaining({
+              name: 'VoclCognitoAuthorizer',
+              type: 'COGNITO_USER_POOLS',
+              arn: { 'Fn::GetAtt': ['CognitoUserPool', 'Arn'] },
+            }),
+          }),
+        }),
+      ])
+    );
+
+    expect(realtimeTokenEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           http: expect.objectContaining({

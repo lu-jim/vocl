@@ -5,6 +5,14 @@ type SubmitBatchTranscriptionInput = {
   language?: string;
 };
 
+type CreateRealtimeTokenResponse =
+  | {
+      key_value?: string;
+      error?: string;
+      message?: string;
+    }
+  | null;
+
 type SpeechmaticsJobStatus = 'running' | 'done' | 'rejected' | 'deleted' | 'expired';
 
 type SpeechmaticsJobPayload = {
@@ -27,6 +35,8 @@ type SpeechmaticsCreateJobResponse =
   | null;
 
 const DEFAULT_BATCH_API_BASE_URL = 'https://eu1.asr.api.speechmatics.com/v2';
+const DEFAULT_MANAGEMENT_API_BASE_URL = 'https://mp.speechmatics.com/v1';
+const DEFAULT_REALTIME_WEBSOCKET_URL = 'wss://eu.rt.speechmatics.com/v2';
 
 const getSpeechmaticsApiKey = () => {
   const apiKey = process.env.SPEECHMATICS_API_KEY;
@@ -42,7 +52,30 @@ const getSpeechmaticsApiBaseUrl = () => {
   return process.env.SPEECHMATICS_BATCH_API_URL ?? DEFAULT_BATCH_API_BASE_URL;
 };
 
+const getSpeechmaticsManagementApiBaseUrl = () => {
+  return process.env.SPEECHMATICS_MANAGEMENT_API_URL ?? DEFAULT_MANAGEMENT_API_BASE_URL;
+};
+
+const getSpeechmaticsRealtimeWebsocketUrl = () => {
+  return process.env.SPEECHMATICS_REALTIME_WEBSOCKET_URL ?? DEFAULT_REALTIME_WEBSOCKET_URL;
+};
+
 const getSpeechmaticsErrorMessage = (payload: SpeechmaticsCreateJobResponse, fallback: string) => {
+  if (payload?.error) {
+    return payload.error;
+  }
+
+  if (payload?.message) {
+    return payload.message;
+  }
+
+  return fallback;
+};
+
+const getSpeechmaticsManagementErrorMessage = (
+  payload: CreateRealtimeTokenResponse,
+  fallback: string
+) => {
   if (payload?.error) {
     return payload.error;
   }
@@ -157,4 +190,38 @@ export const getBatchTranscriptionTranscript = async (jobId: string, format = 't
   }
 
   return body;
+};
+
+export const createRealtimeTranscriptionToken = async (ttl = 300) => {
+  const response = await fetch(`${getSpeechmaticsManagementApiBaseUrl()}/api_keys?type=rt`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getSpeechmaticsApiKey()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ttl,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as CreateRealtimeTokenResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      getSpeechmaticsManagementErrorMessage(
+        payload,
+        'Could not create a realtime Speechmatics token.'
+      )
+    );
+  }
+
+  if (!payload?.key_value) {
+    throw new Error('Speechmatics did not return a realtime token.');
+  }
+
+  return {
+    key: payload.key_value,
+    expiresInSeconds: ttl,
+    websocketUrl: `${getSpeechmaticsRealtimeWebsocketUrl()}?jwt=${encodeURIComponent(payload.key_value)}`,
+  };
 };

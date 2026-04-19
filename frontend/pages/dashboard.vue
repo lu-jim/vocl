@@ -101,6 +101,7 @@ const handleLogout = async () => {
       </section>
 
       <AudioUploader />
+      <RealtimeRecorder />
 
       <section
         class="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30"
