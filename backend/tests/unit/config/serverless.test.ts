@@ -22,6 +22,39 @@ describe('serverless configuration', () => {
     );
   });
 
+  it('uses a named Cognito authorizer for protected REST endpoints', () => {
+    const uploadEvents = (serverlessConfiguration.functions?.upload as { events?: unknown[] })?.events;
+    const historyEvents = (serverlessConfiguration.functions?.history as { events?: unknown[] })?.events;
+
+    expect(uploadEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          http: expect.objectContaining({
+            authorizer: expect.objectContaining({
+              name: 'VoclCognitoAuthorizer',
+              type: 'COGNITO_USER_POOLS',
+              arn: { 'Fn::GetAtt': ['CognitoUserPool', 'Arn'] },
+            }),
+          }),
+        }),
+      ])
+    );
+
+    expect(historyEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          http: expect.objectContaining({
+            authorizer: expect.objectContaining({
+              name: 'VoclCognitoAuthorizer',
+              type: 'COGNITO_USER_POOLS',
+              arn: { 'Fn::GetAtt': ['CognitoUserPool', 'Arn'] },
+            }),
+          }),
+        }),
+      ])
+    );
+  });
+
   it('exposes environment variables required by the app', () => {
     expect(serverlessConfiguration.provider?.environment).toEqual(
       expect.objectContaining({

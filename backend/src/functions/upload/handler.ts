@@ -1,7 +1,10 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ulid } from 'ulid';
+import { getAuthenticatedUserId } from '@libs/auth';
 import { formatJSONResponse, type ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
+import { createUploadRecord } from '@libs/transcriptions';
 
 import schema from './schema';
 
@@ -21,9 +24,20 @@ const isSupportedAudioType = (contentType: string) => {
 };
 
 const upload: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+  const userId = getAuthenticatedUserId(event);
   const bucketName = process.env.AUDIO_BUCKET_NAME;
+  const tableName = process.env.TRANSCRIPTIONS_TABLE_NAME;
 
-  if (!bucketName) {
+  if (!userId) {
+    return formatJSONResponse(
+      {
+        message: 'Authentication is required.',
+      },
+      { statusCode: 401 }
+    );
+  }
+
+  if (!bucketName || !tableName) {
     return formatJSONResponse(
       {
         message: 'Upload configuration is missing.',
@@ -74,8 +88,23 @@ const upload: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) 
     );
   }
 
+  const transcriptionId = ulid();
   const safeFilename = sanitizeFilename(filename);
-  const objectKey = `uploads/${new Date().toISOString().slice(0, 10)}/${event.requestContext.requestId}-${safeFilename}`;
+  const now = new Date().toISOString();
+  const objectKey = `uploads/${userId}/${transcriptionId}/${safeFilename}`;
+
+  await createUploadRecord({
+    userId,
+    transcriptionId,
+    filename,
+    contentType,
+    size,
+    status: 'uploaded',
+    audioKey: objectKey,
+    createdAt: now,
+    updatedAt: now,
+  });
+
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: objectKey,
@@ -88,6 +117,7 @@ const upload: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) 
   return formatJSONResponse({
     uploadUrl,
     uploadMethod: 'PUT',
+    transcriptionId,
     audioKey: objectKey,
     bucketName,
     expiresInSeconds: PRESIGNED_URL_TTL_SECONDS,

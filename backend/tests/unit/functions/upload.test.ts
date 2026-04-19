@@ -1,5 +1,28 @@
+const mockDynamoSend = jest.fn();
+
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn(),
+}));
+
+jest.mock('@aws-sdk/lib-dynamodb', () => {
+  class PutCommand {
+    input: Record<string, unknown>;
+
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
+    }
+  }
+
+  return {
+    DynamoDBDocumentClient: {
+      from: jest.fn(() => ({ send: mockDynamoSend })),
+    },
+    PutCommand,
+  };
+});
+
+jest.mock('ulid', () => ({
+  ulid: jest.fn(() => '01JUPLOADTESTULID'),
 }));
 
 jest.mock('@aws-sdk/client-s3', () => {
@@ -28,16 +51,20 @@ describe('upload handler', () => {
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-18T09:30:00.000Z'));
     process.env.AUDIO_BUCKET_NAME = 'vocl-dev-audio-test';
+    process.env.TRANSCRIPTIONS_TABLE_NAME = 'vocl-dev-transcriptions';
     mockedGetSignedUrl.mockResolvedValue('https://signed.example/upload');
+    mockDynamoSend.mockResolvedValue({});
   });
 
   afterEach(() => {
     jest.useRealTimers();
     delete process.env.AUDIO_BUCKET_NAME;
+    delete process.env.TRANSCRIPTIONS_TABLE_NAME;
     mockedGetSignedUrl.mockReset();
+    mockDynamoSend.mockReset();
   });
 
-  it('returns a presigned upload payload for valid audio uploads', async () => {
+  it('returns a presigned upload payload and stores metadata for authenticated uploads', async () => {
     const result = await main(
       createApiGatewayEvent({
         body: JSON.stringify({
@@ -60,6 +87,11 @@ describe('upload handler', () => {
           httpMethod: 'POST',
           path: '/upload',
           requestId: 'req-123',
+          authorizer: {
+            claims: {
+              sub: 'user-123',
+            },
+          },
           resourcePath: '/upload',
         } as never,
       }) as never,
@@ -77,7 +109,8 @@ describe('upload handler', () => {
       JSON.stringify({
         uploadUrl: 'https://signed.example/upload',
         uploadMethod: 'PUT',
-        audioKey: 'uploads/2026-04-18/req-123-meeting.mp3',
+        transcriptionId: '01JUPLOADTESTULID',
+        audioKey: 'uploads/user-123/01JUPLOADTESTULID/meeting.mp3',
         bucketName: 'vocl-dev-audio-test',
         expiresInSeconds: 900,
         maxUploadSizeBytes: 20971520,
@@ -87,6 +120,65 @@ describe('upload handler', () => {
       })
     );
     expect(mockedGetSignedUrl).toHaveBeenCalledTimes(1);
+    expect(mockDynamoSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          TableName: 'vocl-dev-transcriptions',
+          Item: expect.objectContaining({
+            userId: 'user-123',
+            transcriptionId: '01JUPLOADTESTULID',
+            filename: 'meeting.mp3',
+            contentType: 'audio/mpeg',
+            size: 1024,
+            status: 'uploaded',
+            audioKey: 'uploads/user-123/01JUPLOADTESTULID/meeting.mp3',
+            createdAt: '2026-04-18T09:30:00.000Z',
+            updatedAt: '2026-04-18T09:30:00.000Z',
+          }),
+        },
+      })
+    );
+  });
+
+  it('rejects unauthenticated upload requests', async () => {
+    const result = await main(
+      createApiGatewayEvent({
+        body: JSON.stringify({
+          filename: 'meeting.mp3',
+          contentType: 'audio/mpeg',
+          size: 1024,
+        }) as never,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        httpMethod: 'POST',
+        path: '/upload',
+        resource: '/upload',
+        rawBody: JSON.stringify({
+          filename: 'meeting.mp3',
+          contentType: 'audio/mpeg',
+          size: 1024,
+        }),
+        requestContext: {
+          httpMethod: 'POST',
+          path: '/upload',
+          requestId: 'req-unauthenticated',
+          authorizer: {},
+          resourcePath: '/upload',
+        } as never,
+      }) as never,
+      {} as never,
+      () => undefined
+    );
+
+    expect(result?.statusCode).toBe(401);
+    expect(result?.body).toBe(
+      JSON.stringify({
+        message: 'Authentication is required.',
+      })
+    );
+    expect(mockedGetSignedUrl).not.toHaveBeenCalled();
+    expect(mockDynamoSend).not.toHaveBeenCalled();
   });
 
   it('rejects files above the 20 MB limit', async () => {
@@ -108,6 +200,17 @@ describe('upload handler', () => {
           contentType: 'audio/mpeg',
           size: 20 * 1024 * 1024 + 1,
         }),
+        requestContext: {
+          httpMethod: 'POST',
+          path: '/upload',
+          requestId: 'req-too-large',
+          authorizer: {
+            claims: {
+              sub: 'user-123',
+            },
+          },
+          resourcePath: '/upload',
+        } as never,
       }) as never,
       {} as never,
       () => undefined
@@ -120,6 +223,7 @@ describe('upload handler', () => {
       })
     );
     expect(mockedGetSignedUrl).not.toHaveBeenCalled();
+    expect(mockDynamoSend).not.toHaveBeenCalled();
   });
 
   it('rejects unsupported content types', async () => {
@@ -141,6 +245,17 @@ describe('upload handler', () => {
           contentType: 'text/plain',
           size: 512,
         }),
+        requestContext: {
+          httpMethod: 'POST',
+          path: '/upload',
+          requestId: 'req-invalid-type',
+          authorizer: {
+            claims: {
+              sub: 'user-123',
+            },
+          },
+          resourcePath: '/upload',
+        } as never,
       }) as never,
       {} as never,
       () => undefined
@@ -153,6 +268,7 @@ describe('upload handler', () => {
       })
     );
     expect(mockedGetSignedUrl).not.toHaveBeenCalled();
+    expect(mockDynamoSend).not.toHaveBeenCalled();
   });
 
   it('returns a server error when the upload bucket is not configured', async () => {
@@ -176,6 +292,17 @@ describe('upload handler', () => {
           contentType: 'audio/mpeg',
           size: 1024,
         }),
+        requestContext: {
+          httpMethod: 'POST',
+          path: '/upload',
+          requestId: 'req-missing-bucket',
+          authorizer: {
+            claims: {
+              sub: 'user-123',
+            },
+          },
+          resourcePath: '/upload',
+        } as never,
       }) as never,
       {} as never,
       () => undefined
@@ -188,5 +315,6 @@ describe('upload handler', () => {
       })
     );
     expect(mockedGetSignedUrl).not.toHaveBeenCalled();
+    expect(mockDynamoSend).not.toHaveBeenCalled();
   });
 });

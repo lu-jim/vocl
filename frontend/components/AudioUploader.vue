@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRuntimeConfig } from '#imports';
 import { computed, ref } from 'vue';
+import { getApiErrorMessage } from '../utils/api-errors';
 
 defineOptions({
   name: 'AudioUploader',
@@ -31,6 +32,7 @@ const EXTENSION_TO_MIME_TYPE: Record<string, string> = {
 };
 
 const runtimeConfig = useRuntimeConfig();
+const auth = useAuth();
 const apiBaseUrl = computed(() => runtimeConfig.public.apiBaseUrl.replace(/\/$/, ''));
 const selectedFile = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -140,9 +142,17 @@ const handleDrop = (event: DragEvent) => {
 
 const requestUploadTarget = async (file: File): Promise<UploadRequestResponse> => {
   const contentType = resolveContentType(file);
+  const token = await auth.getIdToken();
+
+  if (!token) {
+    throw new Error('Sign in again before requesting an upload URL.');
+  }
 
   return await $fetch<UploadRequestResponse>(`${apiBaseUrl.value}/upload`, {
     method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: {
       filename: file.name,
       contentType,
@@ -233,8 +243,7 @@ const handleUpload = async () => {
     successMessage.value =
       'Audio uploaded successfully. The file is now in S3 and ready for the transcription step.';
   } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : 'The upload could not be completed.';
+    errorMessage.value = getApiErrorMessage(error, 'The upload could not be completed.');
   } finally {
     isUploading.value = false;
   }

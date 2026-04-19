@@ -252,6 +252,13 @@ export const useAuth = () => {
     }
   };
 
+  const getIdToken = async () => {
+    ensureConfigured();
+
+    const session = await fetchAuthSession();
+    return session.tokens?.idToken?.toString() ?? null;
+  };
+
   return {
     user,
     status,
@@ -266,5 +273,6 @@ export const useAuth = () => {
     confirmRegistration,
     login,
     logout,
+    getIdToken,
   };
 };

@@ -6,6 +6,13 @@ export default {
   events: [
     {
       http: {
+        authorizer: {
+          name: 'VoclCognitoAuthorizer',
+          type: 'COGNITO_USER_POOLS',
+          arn: {
+            'Fn::GetAtt': ['CognitoUserPool', 'Arn'],
+          },
+        },
         cors: true,
         method: 'post',
         path: 'upload',
