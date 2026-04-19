@@ -3,7 +3,13 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getAuthenticatedUserId } from '@libs/auth';
 import { formatJSONResponse } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
-import { getTranscriptionForUser, listTranscriptionsForUser } from '@libs/transcriptions';
+import { getBatchTranscriptionJob } from '@libs/speechmatics';
+import {
+  getTranscriptionForUser,
+  listTranscriptionsForUser,
+  type TranscriptionRecord,
+  updateTranscriptionForUser,
+} from '@libs/transcriptions';
 
 const mapHistoryItem = (item: {
   transcriptionId: string;
@@ -18,6 +24,62 @@ const mapHistoryItem = (item: {
   audioKey: item.audioKey,
   createdAt: item.createdAt,
 });
+
+const syncProcessingRecord = async (item: TranscriptionRecord) => {
+  if (item.status !== 'processing' || !item.speechmaticsJobId) {
+    return item;
+  }
+
+  try {
+    const job = await getBatchTranscriptionJob(item.speechmaticsJobId);
+
+    if (job.status === 'running') {
+      return item;
+    }
+
+    const updatedAt = new Date().toISOString();
+
+    if (job.status === 'done') {
+      await updateTranscriptionForUser(item.userId, item.transcriptionId, {
+        status: 'completed',
+        completedAt: updatedAt,
+        updatedAt,
+        errorMessage: undefined,
+      });
+
+      return {
+        ...item,
+        status: 'completed',
+        completedAt: updatedAt,
+        updatedAt,
+        errorMessage: undefined,
+      };
+    }
+
+    const errorMessage = job.errorMessage ?? `Speechmatics job ${job.status}.`;
+
+    await updateTranscriptionForUser(item.userId, item.transcriptionId, {
+      status: 'failed',
+      updatedAt,
+      errorMessage,
+    });
+
+    return {
+      ...item,
+      status: 'failed',
+      updatedAt,
+      errorMessage,
+    };
+  } catch (error) {
+    console.error('Failed to sync transcription status from Speechmatics.', {
+      transcriptionId: item.transcriptionId,
+      speechmaticsJobId: item.speechmaticsJobId,
+      error,
+    });
+
+    return item;
+  }
+};
 
 const history = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const userId = getAuthenticatedUserId(event);
@@ -45,8 +107,10 @@ const history = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResu
       );
     }
 
+    const syncedItem = await syncProcessingRecord(item);
+
     return formatJSONResponse({
-      item: mapHistoryItem(item),
+      item: mapHistoryItem(syncedItem),
     });
   }
 
@@ -57,9 +121,10 @@ const history = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResu
     : 10;
 
   const result = await listTranscriptionsForUser(userId, cursor, limit);
+  const syncedItems = await Promise.all(result.items.map(syncProcessingRecord));
 
   return formatJSONResponse({
-    items: result.items.map(mapHistoryItem),
+    items: syncedItems.map(mapHistoryItem),
     nextCursor: result.nextCursor,
   });
 };

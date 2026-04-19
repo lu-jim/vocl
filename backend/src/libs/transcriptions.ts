@@ -4,6 +4,7 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
 const dynamoClient = new DynamoDBClient({});
@@ -19,6 +20,11 @@ export type TranscriptionRecord = {
   audioKey: string;
   createdAt: string;
   updatedAt: string;
+  speechmaticsJobId?: string;
+  language?: string;
+  transcriptKey?: string;
+  completedAt?: string;
+  errorMessage?: string;
 };
 
 const getTableName = () => {
@@ -80,4 +86,41 @@ export const getTranscriptionForUser = async (userId: string, transcriptionId: s
   );
 
   return (result.Item as TranscriptionRecord | undefined) ?? null;
+};
+
+export const updateTranscriptionForUser = async (
+  userId: string,
+  transcriptionId: string,
+  updates: Partial<Omit<TranscriptionRecord, 'userId' | 'transcriptionId' | 'createdAt'>>
+) => {
+  const entries = Object.entries(updates).filter(([, value]) => value !== undefined);
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  const updateExpressionParts: string[] = [];
+  const expressionAttributeNames: Record<string, string> = {};
+  const expressionAttributeValues: Record<string, unknown> = {};
+
+  entries.forEach(([key, value], index) => {
+    const nameKey = `#field${index}`;
+    const valueKey = `:value${index}`;
+    updateExpressionParts.push(`${nameKey} = ${valueKey}`);
+    expressionAttributeNames[nameKey] = key;
+    expressionAttributeValues[valueKey] = value;
+  });
+
+  await documentClient.send(
+    new UpdateCommand({
+      TableName: getTableName(),
+      Key: {
+        userId,
+        transcriptionId,
+      },
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+    })
+  );
 };

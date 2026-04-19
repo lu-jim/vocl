@@ -8,6 +8,11 @@ import upload from '@functions/upload';
 
 const stage = '${opt:stage, self:provider.stage}';
 const serviceName = 'vocl';
+const apiGatewayCorsResponseParameters = {
+  'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+  'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,Authorization'",
+  'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,POST,OPTIONS'",
+};
 
 export const serverlessConfiguration: AWS = {
   service: serviceName,
@@ -28,6 +33,7 @@ export const serverlessConfiguration: AWS = {
       STAGE: stage,
       TRANSCRIPTIONS_TABLE_NAME: '${self:service}-${self:provider.stage}-transcriptions',
       AUDIO_BUCKET_NAME: '${self:service}-${self:provider.stage}-audio-${aws:accountId}',
+      SPEECHMATICS_API_KEY: '${ssm:/vocl/speechmatics-api-key}',
       USER_POOL_ID: { Ref: 'CognitoUserPool' },
       USER_POOL_CLIENT_ID: { Ref: 'CognitoUserPoolClient' },
     },
@@ -169,6 +175,38 @@ export const serverlessConfiguration: AWS = {
               },
             ],
           },
+        },
+      },
+      ApiGatewayDefault4xxGatewayResponse: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          RestApiId: { Ref: 'ApiGatewayRestApi' },
+          ResponseType: 'DEFAULT_4XX',
+          ResponseParameters: apiGatewayCorsResponseParameters,
+        },
+      },
+      ApiGatewayDefault5xxGatewayResponse: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          RestApiId: { Ref: 'ApiGatewayRestApi' },
+          ResponseType: 'DEFAULT_5XX',
+          ResponseParameters: apiGatewayCorsResponseParameters,
+        },
+      },
+      ApiGatewayUnauthorizedGatewayResponse: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          RestApiId: { Ref: 'ApiGatewayRestApi' },
+          ResponseType: 'UNAUTHORIZED',
+          ResponseParameters: apiGatewayCorsResponseParameters,
+        },
+      },
+      ApiGatewayAccessDeniedGatewayResponse: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          RestApiId: { Ref: 'ApiGatewayRestApi' },
+          ResponseType: 'ACCESS_DENIED',
+          ResponseParameters: apiGatewayCorsResponseParameters,
         },
       },
     },

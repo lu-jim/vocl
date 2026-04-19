@@ -25,6 +25,9 @@ describe('serverless configuration', () => {
   it('uses a named Cognito authorizer for protected REST endpoints', () => {
     const uploadEvents = (serverlessConfiguration.functions?.upload as { events?: unknown[] })?.events;
     const historyEvents = (serverlessConfiguration.functions?.history as { events?: unknown[] })?.events;
+    const transcribeEvents = (serverlessConfiguration.functions?.transcribe as {
+      events?: unknown[];
+    })?.events;
 
     expect(uploadEvents).toEqual(
       expect.arrayContaining([
@@ -53,6 +56,20 @@ describe('serverless configuration', () => {
         }),
       ])
     );
+
+    expect(transcribeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          http: expect.objectContaining({
+            authorizer: expect.objectContaining({
+              name: 'VoclCognitoAuthorizer',
+              type: 'COGNITO_USER_POOLS',
+              arn: { 'Fn::GetAtt': ['CognitoUserPool', 'Arn'] },
+            }),
+          }),
+        }),
+      ])
+    );
   });
 
   it('exposes environment variables required by the app', () => {
@@ -63,6 +80,7 @@ describe('serverless configuration', () => {
         STAGE: '${opt:stage, self:provider.stage}',
         TRANSCRIPTIONS_TABLE_NAME: '${self:service}-${self:provider.stage}-transcriptions',
         AUDIO_BUCKET_NAME: '${self:service}-${self:provider.stage}-audio-${aws:accountId}',
+        SPEECHMATICS_API_KEY: '${ssm:/vocl/speechmatics-api-key}',
         USER_POOL_ID: { Ref: 'CognitoUserPool' },
         USER_POOL_CLIENT_ID: { Ref: 'CognitoUserPoolClient' },
       })
@@ -119,6 +137,18 @@ describe('serverless configuration', () => {
         }),
         AudioBucketPolicy: expect.objectContaining({
           Type: 'AWS::S3::BucketPolicy',
+        }),
+        ApiGatewayDefault4xxGatewayResponse: expect.objectContaining({
+          Type: 'AWS::ApiGateway::GatewayResponse',
+        }),
+        ApiGatewayDefault5xxGatewayResponse: expect.objectContaining({
+          Type: 'AWS::ApiGateway::GatewayResponse',
+        }),
+        ApiGatewayUnauthorizedGatewayResponse: expect.objectContaining({
+          Type: 'AWS::ApiGateway::GatewayResponse',
+        }),
+        ApiGatewayAccessDeniedGatewayResponse: expect.objectContaining({
+          Type: 'AWS::ApiGateway::GatewayResponse',
         }),
       })
     );
@@ -236,6 +266,33 @@ describe('serverless configuration', () => {
         }),
       ])
     );
+  });
+
+  it('adds CORS headers to API Gateway generated error responses', () => {
+    const resources = serverlessConfiguration.resources?.Resources as Record<string, unknown>;
+    const gatewayResponseResourceNames = [
+      'ApiGatewayDefault4xxGatewayResponse',
+      'ApiGatewayDefault5xxGatewayResponse',
+      'ApiGatewayUnauthorizedGatewayResponse',
+      'ApiGatewayAccessDeniedGatewayResponse',
+    ];
+
+    for (const resourceName of gatewayResponseResourceNames) {
+      expect(resources[resourceName]).toEqual(
+        expect.objectContaining({
+          Type: 'AWS::ApiGateway::GatewayResponse',
+          Properties: expect.objectContaining({
+            RestApiId: { Ref: 'ApiGatewayRestApi' },
+            ResponseParameters: {
+              'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+              'gatewayresponse.header.Access-Control-Allow-Headers':
+                "'Content-Type,Authorization'",
+              'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,POST,OPTIONS'",
+            },
+          }),
+        })
+      );
+    }
   });
 
   it('exports stack outputs needed by the frontend integration', () => {

@@ -1,5 +1,9 @@
 const mockDynamoSend = jest.fn();
 
+jest.mock('@libs/speechmatics', () => ({
+  getBatchTranscriptionJob: jest.fn(),
+}));
+
 jest.mock('@aws-sdk/lib-dynamodb', () => {
   class GetCommand {
     input: Record<string, unknown>;
@@ -17,16 +21,26 @@ jest.mock('@aws-sdk/lib-dynamodb', () => {
     }
   }
 
+  class UpdateCommand {
+    input: Record<string, unknown>;
+
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
+    }
+  }
+
   return {
     DynamoDBDocumentClient: {
       from: jest.fn(() => ({ send: mockDynamoSend })),
     },
     GetCommand,
     QueryCommand,
+    UpdateCommand,
   };
 });
 
 import { main } from '@functions/history/handler';
+import { getBatchTranscriptionJob } from '@libs/speechmatics';
 
 import { createApiGatewayEvent } from './event-factory';
 
@@ -88,6 +102,8 @@ const createEvent = (overrides: Parameters<typeof createApiGatewayEvent>[0] = {}
 };
 
 describe('history handler', () => {
+  const mockedGetBatchTranscriptionJob = jest.mocked(getBatchTranscriptionJob);
+
   beforeEach(() => {
     process.env.TRANSCRIPTIONS_TABLE_NAME = 'vocl-dev-transcriptions';
   });
@@ -95,6 +111,7 @@ describe('history handler', () => {
   afterEach(() => {
     delete process.env.TRANSCRIPTIONS_TABLE_NAME;
     mockDynamoSend.mockReset();
+    mockedGetBatchTranscriptionJob.mockReset();
   });
 
   it('returns the authenticated user upload history from DynamoDB', async () => {
@@ -209,5 +226,57 @@ describe('history handler', () => {
         },
       }),
     });
+  });
+
+  it('syncs processing jobs to completed when Speechmatics reports done', async () => {
+    mockDynamoSend
+      .mockResolvedValueOnce({
+        Items: [
+          {
+            userId: 'user-123',
+            transcriptionId: '01JPROCESSINGTEST',
+            filename: 'meeting.mp3',
+            status: 'processing',
+            audioKey: 'uploads/user-123/01JPROCESSINGTEST/meeting.mp3',
+            createdAt: '2026-04-18T09:30:00.000Z',
+            updatedAt: '2026-04-18T09:35:00.000Z',
+            speechmaticsJobId: 'sm-job-123',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({});
+
+    mockedGetBatchTranscriptionJob.mockResolvedValue({
+      id: 'sm-job-123',
+      status: 'done',
+      errorMessage: undefined,
+    });
+
+    const result = await main(createEvent(), {} as never, () => undefined);
+    const parsedBody = JSON.parse(result.body) as {
+      items: Array<{ transcriptionId: string; status: string }>;
+    };
+
+    expect(result.statusCode).toBe(200);
+    expect(parsedBody.items).toEqual([
+      expect.objectContaining({
+        transcriptionId: '01JPROCESSINGTEST',
+        status: 'completed',
+      }),
+    ]);
+    expect(mockedGetBatchTranscriptionJob).toHaveBeenCalledWith('sm-job-123');
+    expect(mockDynamoSend).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        input: expect.objectContaining({
+          TableName: 'vocl-dev-transcriptions',
+          Key: {
+            userId: 'user-123',
+            transcriptionId: '01JPROCESSINGTEST',
+          },
+          UpdateExpression: expect.stringContaining('SET'),
+        }),
+      })
+    );
   });
 });

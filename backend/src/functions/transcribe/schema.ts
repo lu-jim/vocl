@@ -2,10 +2,8 @@ export default {
   type: 'object',
   properties: {
     transcriptionId: { type: 'string', minLength: 1 },
-    audioKey: { type: 'string', minLength: 1 },
-    filename: { type: 'string', minLength: 1 },
-    contentType: { type: 'string', minLength: 1 },
+    language: { type: 'string', minLength: 2, maxLength: 10 },
   },
-  required: ['transcriptionId', 'audioKey', 'filename', 'contentType'],
+  required: ['transcriptionId'],
   additionalProperties: false,
 } as const;
