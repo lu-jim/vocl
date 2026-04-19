@@ -1,3 +1,5 @@
+import tailwindcss from '@tailwindcss/vite';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -6,7 +8,21 @@ export default defineNuxtConfig({
   experimental: {
     serverAppConfig: false,
   },
-  modules: ['@nuxt/eslint', '@nuxtjs/tailwindcss'],
+  css: ['~/assets/css/tailwind.css'],
+  vite: {
+    plugins: [tailwindcss()],
+  },
+  modules: ['@nuxt/eslint', 'shadcn-nuxt'],
+  shadcn: {
+    prefix: '',
+    componentDir: [
+      '@/components/ui',
+      {
+        path: '@/components/elevenlabs-ui',
+        prefix: '',
+      },
+    ],
+  },
   runtimeConfig: {
     public: {
       apiBaseUrl: '',

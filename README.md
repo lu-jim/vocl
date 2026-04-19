@@ -1,16 +1,17 @@
 # Vocali
 
-Vocali is a take-home project for an audio transcription platform built with a serverless AWS backend and a Nuxt frontend.
+Vocali is a transcription platform prototype built with a serverless AWS backend and a Nuxt frontend.
 
 ## Project goals
 
-The platform is intended to support:
+The platform currently supports:
 
 - user registration
 - user authentication
 - logout
 - audio file transcription for files up to 20 MB
 - real-time transcription from the computer microphone
+- saving finalized live transcript text into history
 - transcription history with pagination
 - transcription download
 
@@ -34,7 +35,7 @@ The platform is intended to support:
 
 ## Repository structure
 
-```/dev/null/tree.txt#L1-24
+```text
 vocl/
 ├── backend/
 │   ├── serverless.ts
@@ -45,13 +46,24 @@ vocl/
 │   │   │   ├── upload/
 │   │   │   ├── transcribe/
 │   │   │   ├── history/
-│   │   │   └── download/
+│   │   │   ├── download/
+│   │   │   ├── realtime-token/
+│   │   │   └── realtime-save/
 │   │   └── libs/
 │   └── tests/
 ├── frontend/
-│   ├── app/
+│   ├── app.vue
+│   ├── components/
+│   │   ├── AudioUploader.vue
+│   │   └── RealtimeRecorder.vue
+│   ├── pages/
+│   │   ├── dashboard.vue
+│   │   └── history.vue
 │   ├── nuxt.config.ts
 │   └── package.json
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── package.json
 └── README.md
 ```
@@ -67,7 +79,7 @@ vocl/
 
 From the project root:
 
-```/dev/null/install.sh#L1-2
+```bash
 npm install
 ```
 
@@ -76,29 +88,52 @@ npm install
 From the project root:
 
 ### Format
-```/dev/null/format.sh#L1-1
+```bash
 npm run format
 ```
 
 ### Check formatting
-```/dev/null/format-check.sh#L1-1
+```bash
 npm run format:check
 ```
 
 ### Lint everything
-```/dev/null/lint.sh#L1-1
+```bash
 npm run lint
 ```
 
 ### Run backend tests
-```/dev/null/test.sh#L1-1
+```bash
 npm run test
 ```
 
 ### Typecheck all workspaces
-```/dev/null/typecheck.sh#L1-1
+```bash
 npm run typecheck
 ```
+
+## CI
+
+GitHub Actions runs the baseline validation workflow in `.github/workflows/ci.yml` on pushes to `main` and on pull requests.
+
+The workflow currently runs:
+
+- `npm ci`
+- `npm run lint`
+- `npm run test`
+- `npm run typecheck`
+
+This gives automated coverage for:
+
+- backend unit tests under `backend/tests/unit`
+- backend and frontend linting
+- backend TypeScript checks and Nuxt frontend typechecking
+
+Current gaps:
+
+- no frontend component/unit test harness yet
+- no E2E/browser test suite yet
+- no deploy job in CI
 
 ## How to run the project manually right now
 
@@ -108,13 +143,13 @@ At the current stage, the frontend and backend can be worked on separately.
 
 Start the Nuxt dev server:
 
-```/dev/null/frontend-dev.sh#L1-1
+```bash
 npm run dev --workspace=frontend
 ```
 
 Then open:
 
-```/dev/null/frontend-url.txt#L1-1
+```text
 http://localhost:3000
 ```
 
@@ -123,28 +158,28 @@ http://localhost:3000
 ### Validate the backend code
 Run:
 
-```/dev/null/backend-lint.sh#L1-1
+```bash
 npm run lint --workspace=backend
 ```
 
-```/dev/null/backend-typecheck.sh#L1-1
+```bash
 npm run typecheck --workspace=backend
 ```
 
-```/dev/null/backend-test.sh#L1-1
+```bash
 npm run test --workspace=backend
 ```
 
 ### Package the backend
 This verifies the Serverless configuration bundles correctly:
 
-```/dev/null/backend-package.sh#L1-1
+```bash
 npm --workspace=backend exec serverless package
 ```
 
 ### Invoke the example function locally
 The existing template `hello` function can be invoked locally with:
 
-```/dev/null/backend-invoke-hello.sh#L1-1
+```bash
 npm --workspace=backend exec serverless invoke local -f hello --path src/functions/hello/mock.json
 ```
