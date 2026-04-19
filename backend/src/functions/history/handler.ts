@@ -15,7 +15,7 @@ const mapHistoryItem = (item: {
   transcriptionId: string;
   filename: string;
   status: string;
-  audioKey: string;
+  audioKey?: string;
   createdAt: string;
 }) => ({
   transcriptionId: item.transcriptionId,

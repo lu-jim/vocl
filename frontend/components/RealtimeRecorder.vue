@@ -13,6 +13,14 @@ type RealtimeTokenResponse = {
   expiresInSeconds: number;
 };
 
+type RealtimeSaveResponse = {
+  message: string;
+  transcriptionId: string;
+  transcriptKey: string;
+  filename: string;
+  status: string;
+};
+
 type RecorderState = 'idle' | 'requesting' | 'connecting' | 'recording' | 'stopping';
 
 const auth = useAuth();
@@ -25,11 +33,21 @@ const finalTranscripts = ref<string[]>([]);
 const errorMessage = ref('');
 const sessionMessage = ref('Open your microphone to start live transcription.');
 const language = ref('en');
+const saveTitle = ref('');
+const isSaving = ref(false);
 
 const isBusy = computed(() => recorderState.value === 'requesting' || recorderState.value === 'connecting');
 const isRecording = computed(() => recorderState.value === 'recording');
 const isStopping = computed(() => recorderState.value === 'stopping');
 const canStop = computed(() => recorderState.value === 'recording' || recorderState.value === 'stopping');
+const canSave = computed(
+  () =>
+    finalTranscripts.value.length > 0 &&
+    !isRecording.value &&
+    !isBusy.value &&
+    !isStopping.value &&
+    !isSaving.value
+);
 const hasBrowserSupport = () => {
   if (!import.meta.client) {
     return false;
@@ -95,6 +113,26 @@ const fetchRealtimeToken = async () => {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+const saveRealtimeTranscript = async () => {
+  if (!apiBaseUrl.value) {
+    throw new Error('Set NUXT_PUBLIC_API_BASE_URL before saving realtime transcription.');
+  }
+
+  const token = await getIdToken();
+
+  return await $fetch<RealtimeSaveResponse>(`${apiBaseUrl.value}/realtime/save`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: {
+      transcript: finalTranscripts.value.join('\n'),
+      title: saveTitle.value.trim() || undefined,
+      language: language.value,
     },
   });
 };
@@ -291,7 +329,26 @@ const clearTranscript = () => {
   partialTranscript.value = '';
   finalTranscripts.value = [];
   errorMessage.value = '';
+  saveTitle.value = '';
   sessionMessage.value = 'Open your microphone to start live transcription.';
+};
+
+const saveTranscript = async () => {
+  if (!canSave.value) {
+    return;
+  }
+
+  isSaving.value = true;
+  errorMessage.value = '';
+
+  try {
+    const response = await saveRealtimeTranscript();
+    sessionMessage.value = `Saved transcript as ${response.filename}. View it from history.`;
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(error, 'Could not save the live transcript.');
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 onBeforeUnmount(() => {
@@ -379,6 +436,18 @@ onBeforeUnmount(() => {
           </select>
         </label>
 
+        <label class="block rounded-xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300">
+          <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Save title</span>
+          <input
+            v-model="saveTitle"
+            type="text"
+            maxlength="120"
+            placeholder="Optional transcript name"
+            class="mt-3 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-500"
+            :disabled="isRecording || isBusy || isStopping || isSaving"
+          >
+        </label>
+
         <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
           <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Live partial</p>
           <p class="mt-3 min-h-16 text-sm leading-6 text-slate-200">
@@ -414,6 +483,17 @@ onBeforeUnmount(() => {
               {{ segment }}
             </li>
           </ol>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="!canSave"
+            @click="saveTranscript"
+          >
+            {{ isSaving ? 'Saving...' : 'Save to history' }}
+          </button>
         </div>
       </div>
     </div>

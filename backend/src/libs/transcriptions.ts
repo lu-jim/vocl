@@ -17,7 +17,7 @@ export type TranscriptionRecord = {
   contentType: string;
   size: number;
   status: string;
-  audioKey: string;
+  audioKey?: string;
   createdAt: string;
   updatedAt: string;
   speechmaticsJobId?: string;
@@ -37,7 +37,7 @@ const getTableName = () => {
   return tableName;
 };
 
-export const createUploadRecord = async (record: TranscriptionRecord) => {
+export const createTranscriptionRecord = async (record: TranscriptionRecord) => {
   await documentClient.send(
     new PutCommand({
       TableName: getTableName(),
@@ -45,6 +45,8 @@ export const createUploadRecord = async (record: TranscriptionRecord) => {
     })
   );
 };
+
+export const createUploadRecord = createTranscriptionRecord;
 
 export const listTranscriptionsForUser = async (userId: string, cursor?: string, limit = 10) => {
   const result = await documentClient.send(

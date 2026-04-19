@@ -3,6 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import download from '@functions/download';
 import hello from '@functions/hello';
 import history from '@functions/history';
+import realtimeSave from '@functions/realtime-save';
 import realtimeToken from '@functions/realtime-token';
 import transcribe from '@functions/transcribe';
 import upload from '@functions/upload';
@@ -64,7 +65,7 @@ export const serverlessConfiguration: AWS = {
       },
     },
   },
-  functions: { hello, upload, transcribe, history, download, realtimeToken },
+  functions: { hello, upload, transcribe, history, download, realtimeToken, realtimeSave },
   package: { individually: true },
   custom: {
     esbuild: {

@@ -13,7 +13,7 @@ type HistoryItem = {
   transcriptionId: string;
   filename: string;
   status: string;
-  audioKey: string;
+  audioKey?: string;
   createdAt: string;
 };
 
