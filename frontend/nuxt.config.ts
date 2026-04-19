@@ -3,6 +3,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   telemetry: { enabled: false },
+  experimental: {
+    serverAppConfig: false,
+  },
   modules: ['@nuxt/eslint', '@nuxtjs/tailwindcss'],
   runtimeConfig: {
     public: {
