@@ -1,132 +1,133 @@
 <script setup lang="ts">
+import { Upload, Mic, History, ArrowRight } from 'lucide-vue-next';
+
 defineOptions({
   name: 'HomePage',
 });
+
+useSeoMeta({
+  title: 'Vocali - Audio Transcription Platform',
+  description: 'Record speech, upload audio files, and keep all your transcripts in one place.',
+});
+
+const features = [
+  {
+    icon: Upload,
+    title: 'Batch Upload',
+    description: 'Send audio files for transcription with support for recordings up to 20 MB.',
+  },
+  {
+    icon: Mic,
+    title: 'Live Recording',
+    description: 'Record directly from your microphone with real-time transcription.',
+  },
+  {
+    icon: History,
+    title: 'History',
+    description: 'Browse recent transcription jobs and download completed results.',
+  },
+];
 </script>
 
 <template>
-  <main class="min-h-dvh bg-slate-950 text-slate-100">
-    <div class="mx-auto flex min-h-dvh max-w-6xl flex-col px-6 py-10 lg:px-8">
-      <header class="flex flex-col gap-6 border-b border-slate-800 pb-8">
-        <div
-          class="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-sm text-cyan-300"
-        >
-          <span class="h-2 w-2 rounded-full bg-cyan-400" />
-          Voice transcription
-        </div>
+  <div class="space-y-16">
+    <!-- Hero section -->
+    <section class="space-y-6">
+      <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-sm text-muted-foreground">
+        <span class="h-2 w-2 rounded-full bg-foreground" />
+        Audio transcription platform
+      </div>
 
-        <div class="max-w-3xl space-y-4">
-          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Vocali</h1>
-          <p class="text-lg text-slate-300">
-            Record speech, upload audio files, and keep all your transcripts in one place.
-          </p>
-          <p class="text-sm leading-6 text-slate-400">
-            Sign in to manage your recordings, review past transcriptions, and download completed
-            results whenever you need them.
-          </p>
-        </div>
-      </header>
+      <div class="max-w-2xl space-y-4">
+        <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+          Turn audio into text
+        </h1>
+        <p class="text-lg text-muted-foreground">
+          Record speech, upload audio files, and keep all your transcripts in one place.
+          Sign in to manage your recordings and download completed results.
+        </p>
+      </div>
 
-      <section class="grid gap-6 py-8 lg:grid-cols-[1.3fr_0.7fr]">
-        <article
-          class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-black/20"
-        >
-          <div class="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-xl font-semibold text-white">Turn audio into searchable text</h2>
-              <p class="mt-1 text-sm text-slate-400">
-                Vocali helps you capture spoken content and organize it as text you can revisit,
-                manage, and download.
-              </p>
+      <div class="flex flex-wrap gap-3">
+        <Button size="lg" as-child>
+          <NuxtLink to="/register">
+            Get started
+            <ArrowRight class="ml-2 h-4 w-4" />
+          </NuxtLink>
+        </Button>
+        <Button variant="outline" size="lg" as-child>
+          <NuxtLink to="/login">Sign in</NuxtLink>
+        </Button>
+      </div>
+    </section>
+
+    <!-- Features grid -->
+    <section class="space-y-6">
+      <h2 class="text-2xl font-semibold tracking-tight">What you can do</h2>
+
+      <div class="grid gap-4 sm:grid-cols-3">
+        <Card v-for="feature in features" :key="feature.title">
+          <CardHeader>
+            <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-border">
+              <component :is="feature.icon" class="h-5 w-5" />
             </div>
-            <span
-              class="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-cyan-300"
-            >
-              Ready to use
-            </span>
+            <CardTitle class="text-base">{{ feature.title }}</CardTitle>
+            <CardDescription>{{ feature.description }}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    </section>
+
+    <!-- Use cases -->
+    <section class="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Built for everyday voice workflows</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div>
+            <h3 class="text-sm font-medium">Meetings and calls</h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Keep a written record of conversations, interviews, and team syncs so they are
+              easier to review later.
+            </p>
           </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-300">Upload</h3>
-              <ul class="mt-3 space-y-2 text-sm text-slate-400">
-                <li>• Send audio files for transcription</li>
-                <li>• Support for recordings up to 20 MB</li>
-                <li>• Keep track of processing status</li>
-                <li>• Prepare transcripts for download and review</li>
-              </ul>
-            </div>
-
-            <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                Workspace
-              </h3>
-              <ul class="mt-3 space-y-2 text-sm text-slate-400">
-                <li>• Create an account and sign in securely</li>
-                <li>• Access a personal dashboard and history view</li>
-                <li>• Browse recent transcription jobs</li>
-                <li>• Keep recordings and transcripts organized</li>
-              </ul>
-            </div>
+          <Separator />
+          <div>
+            <h3 class="text-sm font-medium">Notes and voice memos</h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Turn spoken ideas into text quickly and keep them together with the rest of your
+              transcript history.
+            </p>
           </div>
-        </article>
+        </CardContent>
+      </Card>
 
-        <aside
-          class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-black/20"
-        >
-          <h2 class="text-lg font-semibold text-white">What you can do</h2>
-          <ul class="mt-4 space-y-3 text-sm text-slate-300">
-            <li class="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              Create an account and manage your session securely
+      <Card>
+        <CardHeader>
+          <CardTitle>Inside your account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul class="space-y-3 text-sm text-muted-foreground">
+            <li class="flex items-start gap-2">
+              <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+              A secure sign-in experience backed by AWS Cognito
             </li>
-            <li class="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              Access a private dashboard for your recordings and transcripts
+            <li class="flex items-start gap-2">
+              <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+              A dashboard for managing your transcription activity
             </li>
-            <li class="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              Review a dedicated history view for past transcription jobs
+            <li class="flex items-start gap-2">
+              <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+              A history page with status tracking for all jobs
             </li>
-            <li class="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              Prepare for file uploads, live recording, and transcript downloads
+            <li class="flex items-start gap-2">
+              <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+              Support for file uploads, live capture, and transcript downloads
             </li>
           </ul>
-        </aside>
-      </section>
-
-      <section class="grid gap-6 pb-8 lg:grid-cols-2">
-        <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-          <h2 class="text-lg font-semibold text-white">Built for everyday voice workflows</h2>
-          <div class="mt-4 space-y-4">
-            <div>
-              <h3 class="text-sm font-medium text-cyan-300">Meetings and calls</h3>
-              <p class="mt-1 text-sm text-slate-400">
-                Keep a written record of conversations, interviews, and team syncs so they are
-                easier to review later.
-              </p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-cyan-300">Notes and voice memos</h3>
-              <p class="mt-1 text-sm text-slate-400">
-                Turn spoken ideas into text quickly and keep them together with the rest of your
-                transcript history.
-              </p>
-            </div>
-          </div>
-        </article>
-
-        <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-          <h2 class="text-lg font-semibold text-white">Inside your account</h2>
-          <ul class="mt-4 space-y-3 text-sm text-slate-400">
-            <li>• A secure sign-in experience backed by Cognito</li>
-            <li>• A dashboard for managing your transcription activity</li>
-            <li>• A history page with room for pagination and status tracking</li>
-            <li>• A foundation for uploads, live capture, and transcript downloads</li>
-          </ul>
-        </article>
-      </section>
-
-      <footer class="mt-auto border-t border-slate-800 pt-6 text-sm text-slate-500">
-        Capture speech, organize recordings, and keep your transcripts within reach.
-      </footer>
-    </div>
-  </main>
+        </CardContent>
+      </Card>
+    </section>
+  </div>
 </template>

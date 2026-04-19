@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite';
+import type { PluginOption } from 'vite';
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -10,7 +11,7 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/tailwind.css'],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss() as unknown as PluginOption],
   },
   modules: ['@nuxt/eslint', 'shadcn-nuxt'],
   shadcn: {
