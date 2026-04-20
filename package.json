@@ -9,11 +9,14 @@
   "scripts": {
     "format": "prettier --write \"**/*.{ts,vue,js,mjs,cjs,json,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,vue,js,mjs,cjs,json,yml,yaml}\"",
-    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
-    "lint:backend": "npm run lint --workspace=backend",
-    "lint:frontend": "npm run lint --workspace=frontend",
-    "test": "npm run test --workspace=backend",
-    "typecheck": "npm run typecheck --workspace=backend && npm run typecheck --workspace=frontend"
+    "lint": "pnpm --filter backend run lint && pnpm --filter frontend run lint",
+    "lint:backend": "pnpm --filter backend run lint",
+    "lint:frontend": "pnpm --filter frontend run lint",
+    "test": "pnpm --filter backend run test",
+    "typecheck": "pnpm --filter backend run typecheck && pnpm --filter frontend run typecheck",
+    "build:frontend": "pnpm --filter frontend run build",
+    "preview:frontend": "pnpm --filter frontend run preview",
+    "dev:frontend": "pnpm --filter frontend run dev"
   },
   "devDependencies": {
     "prettier": "^3.5.3"

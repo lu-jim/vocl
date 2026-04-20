@@ -72,7 +72,7 @@ vocl/
 ## Requirements
 
 - Node.js 20+
-- npm 10+ recommended
+- pnpm 10+
 - AWS credentials configured locally if you want to deploy the backend
 
 ## Installation
@@ -80,7 +80,7 @@ vocl/
 From the project root:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Workspace commands
@@ -89,27 +89,27 @@ From the project root:
 
 ### Format
 ```bash
-npm run format
+pnpm run format
 ```
 
 ### Check formatting
 ```bash
-npm run format:check
+pnpm run format:check
 ```
 
 ### Lint everything
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 ### Run backend tests
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### Typecheck all workspaces
 ```bash
-npm run typecheck
+pnpm run typecheck
 ```
 
 ## CI
@@ -118,10 +118,10 @@ GitHub Actions runs the baseline validation workflow in `.github/workflows/ci.ym
 
 The workflow currently runs:
 
-- `npm ci`
-- `npm run lint`
-- `npm run test`
-- `npm run typecheck`
+- `pnpm install --frozen-lockfile`
+- `pnpm run lint`
+- `pnpm run test`
+- `pnpm run typecheck`
 
 This gives automated coverage for:
 
@@ -144,7 +144,7 @@ At the current stage, the frontend and backend can be worked on separately.
 Start the Nuxt dev server:
 
 ```bash
-npm run dev --workspace=frontend
+pnpm --filter frontend run dev
 ```
 
 Then open:
@@ -159,27 +159,27 @@ http://localhost:3000
 Run:
 
 ```bash
-npm run lint --workspace=backend
+pnpm --filter backend run lint
 ```
 
 ```bash
-npm run typecheck --workspace=backend
+pnpm --filter backend run typecheck
 ```
 
 ```bash
-npm run test --workspace=backend
+pnpm --filter backend run test
 ```
 
 ### Package the backend
 This verifies the Serverless configuration bundles correctly:
 
 ```bash
-npm --workspace=backend exec serverless package
+pnpm --filter backend exec serverless package
 ```
 
 ### Invoke the example function locally
 The existing template `hello` function can be invoked locally with:
 
 ```bash
-npm --workspace=backend exec serverless invoke local -f hello --path src/functions/hello/mock.json
+pnpm --filter backend exec serverless invoke local -f hello --path src/functions/hello/mock.json
 ```
