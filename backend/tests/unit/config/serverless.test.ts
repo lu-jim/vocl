@@ -25,20 +25,30 @@ describe('serverless configuration', () => {
   });
 
   it('uses a named Cognito authorizer for protected REST endpoints', () => {
-    const uploadEvents = (serverlessConfiguration.functions?.upload as { events?: unknown[] })?.events;
-    const historyEvents = (serverlessConfiguration.functions?.history as { events?: unknown[] })?.events;
-    const transcribeEvents = (serverlessConfiguration.functions?.transcribe as {
-      events?: unknown[];
-    })?.events;
-    const downloadEvents = (serverlessConfiguration.functions?.download as {
-      events?: unknown[];
-    })?.events;
-    const realtimeTokenEvents = (serverlessConfiguration.functions?.realtimeToken as {
-      events?: unknown[];
-    })?.events;
-    const realtimeSaveEvents = (serverlessConfiguration.functions?.realtimeSave as {
-      events?: unknown[];
-    })?.events;
+    const uploadEvents = (serverlessConfiguration.functions?.upload as { events?: unknown[] })
+      ?.events;
+    const historyEvents = (serverlessConfiguration.functions?.history as { events?: unknown[] })
+      ?.events;
+    const transcribeEvents = (
+      serverlessConfiguration.functions?.transcribe as {
+        events?: unknown[];
+      }
+    )?.events;
+    const downloadEvents = (
+      serverlessConfiguration.functions?.download as {
+        events?: unknown[];
+      }
+    )?.events;
+    const realtimeTokenEvents = (
+      serverlessConfiguration.functions?.realtimeToken as {
+        events?: unknown[];
+      }
+    )?.events;
+    const realtimeSaveEvents = (
+      serverlessConfiguration.functions?.realtimeSave as {
+        events?: unknown[];
+      }
+    )?.events;
 
     expect(uploadEvents).toEqual(
       expect.arrayContaining([
@@ -338,8 +348,7 @@ describe('serverless configuration', () => {
             RestApiId: { Ref: 'ApiGatewayRestApi' },
             ResponseParameters: {
               'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
-              'gatewayresponse.header.Access-Control-Allow-Headers':
-                "'Content-Type,Authorization'",
+              'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,Authorization'",
               'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,POST,OPTIONS'",
             },
           }),

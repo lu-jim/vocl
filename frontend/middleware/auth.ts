@@ -4,7 +4,13 @@ import type { RouteLocationNormalized } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
-  if (typeof window === 'undefined') {
+  if (import.meta.server) {
+    return;
+  }
+
+  const boneyardBuildMode = !!(globalThis as { __BONEYARD_BUILD?: boolean }).__BONEYARD_BUILD;
+
+  if (boneyardBuildMode) {
     return;
   }
 

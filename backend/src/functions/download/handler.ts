@@ -92,7 +92,8 @@ const download = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyRes
       );
     }
 
-    const disposition = event.queryStringParameters?.disposition === 'inline' ? 'inline' : 'attachment';
+    const disposition =
+      event.queryStringParameters?.disposition === 'inline' ? 'inline' : 'attachment';
 
     return {
       statusCode: 200,

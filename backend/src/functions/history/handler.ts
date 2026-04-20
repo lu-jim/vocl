@@ -116,9 +116,7 @@ const history = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResu
 
   const cursor = event.queryStringParameters?.cursor;
   const requestedLimit = Number.parseInt(event.queryStringParameters?.limit ?? '10', 10);
-  const limit = Number.isFinite(requestedLimit)
-    ? Math.min(Math.max(requestedLimit, 1), 25)
-    : 10;
+  const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 25) : 10;
 
   const result = await listTranscriptionsForUser(userId, cursor, limit);
   const syncedItems = await Promise.all(result.items.map(syncProcessingRecord));

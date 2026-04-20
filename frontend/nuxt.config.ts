@@ -1,5 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
-import type { PluginOption } from 'vite';
+import { boneyardPlugin } from 'boneyard-js/vite';
+
+const vitePlugins = [tailwindcss(), boneyardPlugin()];
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -11,7 +13,7 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/tailwind.css'],
   vite: {
-    plugins: [tailwindcss() as unknown as PluginOption],
+    plugins: vitePlugins,
   },
   modules: ['@nuxt/eslint', 'shadcn-nuxt'],
   shadcn: {

@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 
 import { useAuth } from './composables/useAuth';
+import './bones/registry';
 
 const auth = useAuth();
 

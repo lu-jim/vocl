@@ -5,13 +5,11 @@ type SubmitBatchTranscriptionInput = {
   language?: string;
 };
 
-type CreateRealtimeTokenResponse =
-  | {
-      key_value?: string;
-      error?: string;
-      message?: string;
-    }
-  | null;
+type CreateRealtimeTokenResponse = {
+  key_value?: string;
+  error?: string;
+  message?: string;
+} | null;
 
 type SpeechmaticsJobStatus = 'running' | 'done' | 'rejected' | 'deleted' | 'expired';
 
@@ -24,15 +22,13 @@ type SpeechmaticsJobPayload = {
   }>;
 };
 
-type SpeechmaticsCreateJobResponse =
-  | {
-      id?: string;
-      status?: SpeechmaticsJobStatus;
-      job?: SpeechmaticsJobPayload;
-      error?: string;
-      message?: string;
-    }
-  | null;
+type SpeechmaticsCreateJobResponse = {
+  id?: string;
+  status?: SpeechmaticsJobStatus;
+  job?: SpeechmaticsJobPayload;
+  error?: string;
+  message?: string;
+} | null;
 
 const DEFAULT_BATCH_API_BASE_URL = 'https://eu1.asr.api.speechmatics.com/v2';
 const DEFAULT_MANAGEMENT_API_BASE_URL = 'https://mp.speechmatics.com/v1';
@@ -155,7 +151,9 @@ export const getBatchTranscriptionJob = async (jobId: string) => {
   const payload = (await response.json().catch(() => null)) as SpeechmaticsCreateJobResponse;
 
   if (!response.ok) {
-    throw new Error(getSpeechmaticsErrorMessage(payload, 'Could not load Speechmatics job details.'));
+    throw new Error(
+      getSpeechmaticsErrorMessage(payload, 'Could not load Speechmatics job details.')
+    );
   }
 
   const job = getSpeechmaticsJob(payload);
@@ -167,8 +165,7 @@ export const getBatchTranscriptionJob = async (jobId: string) => {
   return {
     id: job.id,
     status: job.status,
-    errorMessage:
-      typeof job.errors?.[0]?.message === 'string' ? job.errors[0].message : undefined,
+    errorMessage: typeof job.errors?.[0]?.message === 'string' ? job.errors[0].message : undefined,
   };
 };
 

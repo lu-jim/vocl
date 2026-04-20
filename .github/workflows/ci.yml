@@ -22,7 +22,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 21+ provides Object.groupBy (required by eslint-flat-config-utils / Nuxt ESLint).
+          # Backend Lambdas still target Node 20 in serverless; CI only runs tooling here.
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies

@@ -98,8 +98,17 @@ export const useAuth = () => {
   const runtimeConfig = useRuntimeConfig();
 
   const isE2EMode = () => {
-    const flag = runtimeConfig.public.e2e;
-    return flag === true || flag === 'true';
+    const flag = runtimeConfig.public.e2e as boolean | string | undefined;
+    if (flag === true) {
+      return true;
+    }
+    if (flag === false || flag == null) {
+      return (
+        runtimeConfig.public.cognitoUserPoolId === 'e2e-user-pool' &&
+        runtimeConfig.public.cognitoUserPoolClientId === 'e2e-user-pool-client'
+      );
+    }
+    return flag === 'true' || flag === '1';
   };
 
   const readE2EAuthState = (): E2EAuthState | null => {

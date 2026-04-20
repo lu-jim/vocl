@@ -4,7 +4,7 @@ import type { RouteLocationNormalized } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 
 export default defineNuxtRouteMiddleware(async (_to: RouteLocationNormalized) => {
-  if (typeof window === 'undefined') {
+  if (import.meta.server) {
     return;
   }
 
