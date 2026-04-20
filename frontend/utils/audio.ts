@@ -1,7 +1,15 @@
 export const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 export const AUDIO_EXTENSIONS = [
-  'mp3', 'wav', 'm4a', 'aac', 'ogg', 'webm', 'flac', 'mp4', 'mpeg'
+  'mp3',
+  'wav',
+  'm4a',
+  'aac',
+  'ogg',
+  'webm',
+  'flac',
+  'mp4',
+  'mpeg',
 ] as const;
 
 export const EXTENSION_TO_MIME_TYPE: Record<string, string> = {
@@ -20,7 +28,7 @@ export const ACCEPTED_FILE_TYPES = 'audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm,.flac
 
 export const getFileExtension = (filename: string): string => {
   const segments = filename.toLowerCase().split('.');
-  return segments.length > 1 ? segments.at(-1) ?? '' : '';
+  return segments.length > 1 ? (segments.at(-1) ?? '') : '';
 };
 
 export const resolveContentType = (file: File): string => {
@@ -40,12 +48,14 @@ export const validateAudioFile = (file: File | null): string | null => {
   const normalizedContentType = resolveContentType(file);
   const extension = getFileExtension(file.name);
   const isAudioType = normalizedContentType.startsWith('audio/');
-  const isKnownAudioExtension = AUDIO_EXTENSIONS.includes(extension as typeof AUDIO_EXTENSIONS[number]);
+  const isKnownAudioExtension = AUDIO_EXTENSIONS.includes(
+    extension as (typeof AUDIO_EXTENSIONS)[number]
+  );
 
   if (!isAudioType && !isKnownAudioExtension) {
     return 'Choose a supported audio file such as MP3, WAV, M4A, AAC, OGG, WebM, or FLAC.';
   }
-  
+
   return null;
 };
 
@@ -58,14 +68,15 @@ export const getTranscriptFilename = (filename: string): string => {
 
 export const hasBrowserAudioSupport = (): boolean => {
   if (typeof window === 'undefined') return false;
-  
-  const browserWindow = window as Window & typeof globalThis & {
-    webkitAudioContext?: typeof AudioContext;
-  };
-  
+
+  const browserWindow = window as Window &
+    typeof globalThis & {
+      webkitAudioContext?: typeof AudioContext;
+    };
+
   return Boolean(
     (browserWindow.AudioContext || browserWindow.webkitAudioContext) &&
-      navigator.mediaDevices?.getUserMedia
+    navigator.mediaDevices?.getUserMedia
   );
 };
 

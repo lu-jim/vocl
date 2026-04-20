@@ -60,9 +60,7 @@ const tools = [
     <!-- Header -->
     <div>
       <p class="text-sm text-muted-foreground">My Workspace</p>
-      <h1 class="text-2xl font-semibold tracking-tight">
-        {{ greeting }}, {{ displayName }}
-      </h1>
+      <h1 class="text-2xl font-semibold tracking-tight">{{ greeting }}, {{ displayName }}</h1>
     </div>
 
     <!-- Tool cards grid -->
@@ -88,9 +86,7 @@ const tools = [
 
       <Card>
         <CardContent class="py-8 text-center">
-          <p class="text-sm text-muted-foreground">
-            Your recent transcriptions will appear here.
-          </p>
+          <p class="text-sm text-muted-foreground">Your recent transcriptions will appear here.</p>
           <div class="mt-4 flex justify-center gap-2">
             <Button variant="outline" as-child>
               <NuxtLink to="/transcribe">

@@ -55,7 +55,7 @@ const clearHistoryRefreshTimer = () => {
 };
 
 const currentCursor = computed(() => {
-  return page.value > 1 ? previousCursors.value.at(-1) ?? null : null;
+  return page.value > 1 ? (previousCursors.value.at(-1) ?? null) : null;
 });
 
 const hasProcessingItems = computed(() => {
@@ -112,7 +112,7 @@ const startTranscription = async (item: HistoryItem) => {
     });
 
     setSuccess(`Started transcription for ${item.filename}.`);
-    await loadHistory(page.value > 1 ? previousCursors.value.at(-1) ?? null : null);
+    await loadHistory(page.value > 1 ? (previousCursors.value.at(-1) ?? null) : null);
   } catch (error) {
     setError(getApiErrorMessage(error, 'Could not start the transcription job.'));
   } finally {
@@ -164,7 +164,7 @@ const goToPreviousPage = async () => {
 
 const goToNextPage = async () => {
   if (!hasNextPage.value || !nextCursor.value) return;
-  previousCursors.value.push(page.value === 1 ? null : previousCursors.value.at(-1) ?? null);
+  previousCursors.value.push(page.value === 1 ? null : (previousCursors.value.at(-1) ?? null));
   const cursorForNextPage = nextCursor.value;
   page.value += 1;
   await loadHistory(cursorForNextPage);
@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
           variant="outline"
           size="sm"
           :disabled="isLoading"
-          @click="loadHistory(page > 1 ? previousCursors.at(-1) ?? null : null)"
+          @click="loadHistory(page > 1 ? (previousCursors.at(-1) ?? null) : null)"
         >
           <RefreshCw :class="['mr-2 h-4 w-4', isLoading && 'animate-spin']" />
           Refresh
@@ -220,14 +220,22 @@ onBeforeUnmount(() => {
       </CardHeader>
 
       <CardContent class="p-0">
-        <div v-if="isLoading && paginatedItems.length === 0" data-testid="history-loading" class="py-12 text-center">
+        <div
+          v-if="isLoading && paginatedItems.length === 0"
+          data-testid="history-loading"
+          class="py-12 text-center"
+        >
           <p class="font-medium">Loading your history...</p>
           <p class="mt-1 text-sm text-muted-foreground">
             Fetching upload records linked to your account.
           </p>
         </div>
 
-        <div v-else-if="paginatedItems.length === 0" data-testid="history-empty" class="py-12 text-center">
+        <div
+          v-else-if="paginatedItems.length === 0"
+          data-testid="history-empty"
+          class="py-12 text-center"
+        >
           <p class="font-medium">No uploads yet</p>
           <p class="mt-1 text-sm text-muted-foreground">
             Upload an audio file to create your first history entry.
@@ -284,7 +292,9 @@ onBeforeUnmount(() => {
                 @click="startTranscription(item)"
               >
                 <Play class="mr-2 h-4 w-4" />
-                {{ transcriptionInFlightId === item.transcriptionId ? 'Starting...' : 'Transcribe' }}
+                {{
+                  transcriptionInFlightId === item.transcriptionId ? 'Starting...' : 'Transcribe'
+                }}
               </Button>
             </div>
           </div>
@@ -303,9 +313,7 @@ onBeforeUnmount(() => {
           Previous
         </Button>
 
-        <span class="text-sm text-muted-foreground">
-          {{ paginatedItems.length }} item(s)
-        </span>
+        <span class="text-sm text-muted-foreground"> {{ paginatedItems.length }} item(s) </span>
 
         <Button
           data-testid="history-next-button"
@@ -332,12 +340,19 @@ onBeforeUnmount(() => {
             <CardTitle>Transcript preview</CardTitle>
             <CardDescription>{{ transcriptModal.filename }}</CardDescription>
           </div>
-          <Button data-testid="history-transcript-close" variant="ghost" size="icon" @click="transcriptModal = null">
+          <Button
+            data-testid="history-transcript-close"
+            variant="ghost"
+            size="icon"
+            @click="transcriptModal = null"
+          >
             <X class="h-4 w-4" />
           </Button>
         </CardHeader>
         <CardContent class="flex-1 overflow-auto">
-          <pre class="whitespace-pre-wrap break-words text-sm leading-6">{{ transcriptModal.content }}</pre>
+          <pre class="whitespace-pre-wrap break-words text-sm leading-6">{{
+            transcriptModal.content
+          }}</pre>
         </CardContent>
       </Card>
     </div>

@@ -30,6 +30,8 @@ export default defineNuxtConfig({
       awsRegion: '',
       cognitoUserPoolId: '',
       cognitoUserPoolClientId: '',
+      /** When true (NUXT_PUBLIC_E2E), useAuth uses localStorage mocks — Cypress AUT has no window.Cypress */
+      e2e: false,
     },
   },
 });

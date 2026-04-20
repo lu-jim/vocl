@@ -1,1 +1,1 @@
-export { default as MicSelector } from './MicSelector.vue'
+export { default as MicSelector } from './MicSelector.vue';

@@ -26,7 +26,10 @@ type RealtimeMessage = {
   reason?: string;
 };
 type RealtimeClientLike = {
-  addEventListener: (eventName: 'receiveMessage', listener: (event: { data: RealtimeMessage }) => void) => void;
+  addEventListener: (
+    eventName: 'receiveMessage',
+    listener: (event: { data: RealtimeMessage }) => void
+  ) => void;
   start: (jwt: string, options: unknown) => Promise<unknown>;
   stopRecognition: (options: { noTimeout: true }) => Promise<unknown>;
   sendAudio: (buffer: ArrayBufferLike) => void;
@@ -47,7 +50,9 @@ const language = ref('en');
 const saveTitle = ref('');
 const isSaving = ref(false);
 
-const isBusy = computed(() => recorderState.value === 'requesting' || recorderState.value === 'connecting');
+const isBusy = computed(
+  () => recorderState.value === 'requesting' || recorderState.value === 'connecting'
+);
 const isRecording = computed(() => recorderState.value === 'recording');
 const isStopping = computed(() => recorderState.value === 'stopping');
 const canSave = computed(
@@ -90,9 +95,10 @@ const getE2ERealtimeHook = (): E2ERealtimeHook | null => {
     return null;
   }
 
-  const browserWindow = window as Window & typeof globalThis & {
-    __VOCALI_E2E_REALTIME__?: E2ERealtimeHook;
-  };
+  const browserWindow = window as Window &
+    typeof globalThis & {
+      __VOCALI_E2E_REALTIME__?: E2ERealtimeHook;
+    };
 
   return browserWindow.__VOCALI_E2E_REALTIME__ ?? null;
 };
@@ -120,16 +126,25 @@ const setupAudioCapture = async () => {
   }
 
   if (!hasBrowserAudioSupport()) {
-    throw new Error('This browser does not expose the microphone APIs required for realtime transcription.');
+    throw new Error(
+      'This browser does not expose the microphone APIs required for realtime transcription.'
+    );
   }
 
   mediaStream = await navigator.mediaDevices.getUserMedia({
-    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    audio: {
+      channelCount: 1,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
   });
 
-  const browserWindow = window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+  const browserWindow = window as Window &
+    typeof globalThis & { webkitAudioContext?: typeof AudioContext };
   const BrowserAudioContext = browserWindow.AudioContext || browserWindow.webkitAudioContext;
-  if (!BrowserAudioContext) throw new Error('This browser does not support realtime audio capture.');
+  if (!BrowserAudioContext)
+    throw new Error('This browser does not support realtime audio capture.');
 
   audioContext = new BrowserAudioContext();
   await audioContext.resume();
@@ -214,7 +229,9 @@ const startRecording = async () => {
       client = e2eRealtimeHook.createClient();
     } else {
       const { RealtimeClient } = await import('@speechmatics/real-time-client');
-      client = new RealtimeClient({ url: `${websocketUrl.origin}${websocketUrl.pathname}` }) as unknown as RealtimeClientLike;
+      client = new RealtimeClient({
+        url: `${websocketUrl.origin}${websocketUrl.pathname}`,
+      }) as unknown as RealtimeClientLike;
     }
     if (!client) {
       throw new Error('Realtime client could not be created.');
@@ -353,8 +370,16 @@ onBeforeUnmount(() => {
               </Button>
             </div>
 
-            <AlertMessage v-if="!api.isConfigured.value" data-testid="record-config-warning" variant="warning">
-              Set <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs">NUXT_PUBLIC_API_BASE_URL</code> to enable recording.
+            <AlertMessage
+              v-if="!api.isConfigured.value"
+              data-testid="record-config-warning"
+              variant="warning"
+            >
+              Set
+              <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs"
+                >NUXT_PUBLIC_API_BASE_URL</code
+              >
+              to enable recording.
             </AlertMessage>
 
             <AlertMessage v-if="errorMessage" data-testid="record-error" variant="error">
@@ -399,7 +424,10 @@ onBeforeUnmount(() => {
             <CardDescription>Shows what you're saying in real-time</CardDescription>
           </CardHeader>
           <CardContent>
-            <p data-testid="record-partial-transcript" class="min-h-16 text-sm text-muted-foreground">
+            <p
+              data-testid="record-partial-transcript"
+              class="min-h-16 text-sm text-muted-foreground"
+            >
               {{ partialTranscript || 'Start recording to see live transcription...' }}
             </p>
           </CardContent>

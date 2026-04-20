@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import {
-  Home,
-  Upload,
-  Mic,
-  History,
-  LogOut,
-  Menu,
-  X,
-} from 'lucide-vue-next';
+import { Home, Upload, Mic, History, LogOut, Menu, X } from 'lucide-vue-next';
 
 import { useAuth } from '~/composables/useAuth';
 
@@ -75,11 +67,7 @@ const isActive = (path: string) => route.path === path;
         <!-- Logo -->
         <div class="flex h-16 items-center border-b border-sidebar-border px-6">
           <NuxtLink to="/dashboard" class="flex items-center gap-2">
-            <img
-              src="/Vocali-logo.svg"
-              alt="Vocali"
-              class="h-8 w-auto"
-            >
+            <img src="/Vocali-logo.svg" alt="Vocali" class="h-8 w-auto" />
           </NuxtLink>
         </div>
 

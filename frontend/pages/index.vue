@@ -33,18 +33,18 @@ const features = [
   <div class="space-y-16">
     <!-- Hero section -->
     <section class="space-y-6">
-      <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-sm text-muted-foreground">
+      <div
+        class="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-sm text-muted-foreground"
+      >
         <span class="h-2 w-2 rounded-full bg-foreground" />
         Audio transcription platform
       </div>
 
       <div class="max-w-2xl space-y-4">
-        <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-          Turn audio into text
-        </h1>
+        <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">Turn audio into text</h1>
         <p class="text-lg text-muted-foreground">
-          Record speech, upload audio files, and keep all your transcripts in one place.
-          Sign in to manage your recordings and download completed results.
+          Record speech, upload audio files, and keep all your transcripts in one place. Sign in to
+          manage your recordings and download completed results.
         </p>
       </div>
 
@@ -68,7 +68,9 @@ const features = [
       <div class="grid gap-4 sm:grid-cols-3">
         <Card v-for="feature in features" :key="feature.title">
           <CardHeader>
-            <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-border">
+            <div
+              class="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-border"
+            >
               <component :is="feature.icon" class="h-5 w-5" />
             </div>
             <CardTitle class="text-base">{{ feature.title }}</CardTitle>
@@ -88,8 +90,8 @@ const features = [
           <div>
             <h3 class="text-sm font-medium">Meetings and calls</h3>
             <p class="mt-1 text-sm text-muted-foreground">
-              Keep a written record of conversations, interviews, and team syncs so they are
-              easier to review later.
+              Keep a written record of conversations, interviews, and team syncs so they are easier
+              to review later.
             </p>
           </div>
           <Separator />

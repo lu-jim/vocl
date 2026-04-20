@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { WaveformProps } from './Waveform.vue'
-import { cn } from '@/lib/utils'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import Waveform from './Waveform.vue'
+import type { WaveformProps } from './Waveform.vue';
+import { cn } from '@/lib/utils';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Waveform from './Waveform.vue';
 
 interface Props extends WaveformProps {
-  currentTime?: number
-  duration?: number
-  showHandle?: boolean
+  currentTime?: number;
+  duration?: number;
+  showHandle?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -19,69 +19,72 @@ const props = withDefaults(defineProps<Props>(), {
   barGap: 1,
   barRadius: 1,
   height: 128,
-})
+});
 
 const emit = defineEmits<{
-  seek: [time: number]
-}>()
+  seek: [time: number];
+}>();
 
-const isDragging = ref(false)
-const localProgress = ref(0)
-const containerRef = ref<HTMLDivElement | null>(null)
+const isDragging = ref(false);
+const localProgress = ref(0);
+const containerRef = ref<HTMLDivElement | null>(null);
 
 const waveformData = computed(() => {
   return props.data.length > 0
     ? props.data
-    : Array.from({ length: 100 }, () => 0.2 + Math.random() * 0.6)
-})
+    : Array.from({ length: 100 }, () => 0.2 + Math.random() * 0.6);
+});
 
-watch(() => [props.currentTime, props.duration], () => {
-  if (!isDragging.value && props.duration > 0) {
-    localProgress.value = props.currentTime / props.duration
-  }
-}, { immediate: true })
+watch(
+  () => [props.currentTime, props.duration],
+  () => {
+    if (!isDragging.value && props.duration > 0) {
+      localProgress.value = props.currentTime / props.duration;
+    }
+  },
+  { immediate: true }
+);
 
 function handleScrub(clientX: number) {
-  const container = containerRef.value
-  if (!container)
-    return
+  const container = containerRef.value;
+  if (!container) return;
 
-  const rect = container.getBoundingClientRect()
-  const x = Math.max(0, Math.min(clientX - rect.left, rect.width))
-  const progress = x / rect.width
-  const newTime = progress * props.duration
+  const rect = container.getBoundingClientRect();
+  const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+  const progress = x / rect.width;
+  const newTime = progress * props.duration;
 
-  localProgress.value = progress
-  emit('seek', newTime)
+  localProgress.value = progress;
+  emit('seek', newTime);
 }
 
 function handleMouseDown(e: MouseEvent) {
-  e.preventDefault()
-  isDragging.value = true
-  handleScrub(e.clientX)
+  e.preventDefault();
+  isDragging.value = true;
+  handleScrub(e.clientX);
 }
 
 function handleMouseMove(e: MouseEvent) {
   if (isDragging.value) {
-    handleScrub(e.clientX)
+    handleScrub(e.clientX);
   }
 }
 
 function handleMouseUp() {
   if (isDragging.value) {
-    isDragging.value = false
+    isDragging.value = false;
   }
 }
 
 onMounted(() => {
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-})
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('mousemove', handleMouseMove)
-  document.removeEventListener('mouseup', handleMouseUp)
-})
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+});
 </script>
 
 <template>

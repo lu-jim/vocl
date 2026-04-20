@@ -8,16 +8,14 @@ type Message = {
 export const useMessages = () => {
   const messages = ref<Message[]>([]);
 
-  const errorMessage = computed(() => 
-    messages.value.find(m => m.type === 'error')?.text ?? ''
+  const errorMessage = computed(() => messages.value.find((m) => m.type === 'error')?.text ?? '');
+
+  const successMessage = computed(
+    () => messages.value.find((m) => m.type === 'success')?.text ?? ''
   );
 
-  const successMessage = computed(() => 
-    messages.value.find(m => m.type === 'success')?.text ?? ''
-  );
-
-  const warningMessage = computed(() => 
-    messages.value.find(m => m.type === 'warning')?.text ?? ''
+  const warningMessage = computed(
+    () => messages.value.find((m) => m.type === 'warning')?.text ?? ''
   );
 
   const setError = (text: string) => {
@@ -46,11 +44,11 @@ export const useMessages = () => {
   };
 
   const clearError = () => {
-    messages.value = messages.value.filter(m => m.type !== 'error');
+    messages.value = messages.value.filter((m) => m.type !== 'error');
   };
 
   const clearSuccess = () => {
-    messages.value = messages.value.filter(m => m.type !== 'success');
+    messages.value = messages.value.filter((m) => m.type !== 'success');
   };
 
   return {

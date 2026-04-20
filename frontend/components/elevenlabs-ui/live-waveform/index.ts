@@ -1,1 +1,1 @@
-export { default as LiveWaveform } from './LiveWaveform.vue'
+export { default as LiveWaveform } from './LiveWaveform.vue';

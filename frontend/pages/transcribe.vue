@@ -183,7 +183,9 @@ const handleUpload = async () => {
               Drag and drop or select an audio file from your device.
             </CardDescription>
           </div>
-          <span class="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span
+            class="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+          >
             Max 20 MB
           </span>
         </div>
@@ -194,9 +196,7 @@ const handleUpload = async () => {
           data-testid="transcribe-dropzone"
           :class="[
             'flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors',
-            isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50',
+            isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
           ]"
           role="button"
           tabindex="0"
@@ -226,7 +226,7 @@ const handleUpload = async () => {
             type="file"
             :accept="ACCEPTED_FILE_TYPES"
             @change="handleFileInput"
-          >
+          />
         </div>
 
         <div
@@ -248,8 +248,18 @@ const handleUpload = async () => {
           </Button>
         </div>
 
-        <AlertMessage v-if="!api.isConfigured.value" data-testid="transcribe-config-warning" variant="warning">
-          Set <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs">NUXT_PUBLIC_API_BASE_URL</code> in your local <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs">.env</code> before testing the upload flow.
+        <AlertMessage
+          v-if="!api.isConfigured.value"
+          data-testid="transcribe-config-warning"
+          variant="warning"
+        >
+          Set
+          <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs"
+            >NUXT_PUBLIC_API_BASE_URL</code
+          >
+          in your local
+          <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs">.env</code> before
+          testing the upload flow.
         </AlertMessage>
 
         <AlertMessage v-if="errorMessage" data-testid="transcribe-error" variant="error">
@@ -259,11 +269,18 @@ const handleUpload = async () => {
         <AlertMessage v-if="successMessage" data-testid="transcribe-success" variant="success">
           <p>{{ successMessage }}</p>
           <p v-if="lastUploadSummary" class="mt-2 text-xs text-green-700">
-            Stored as <code class="rounded bg-green-100 px-1 py-0.5 font-mono">{{ lastUploadSummary.audioKey }}</code>
+            Stored as
+            <code class="rounded bg-green-100 px-1 py-0.5 font-mono">{{
+              lastUploadSummary.audioKey
+            }}</code>
           </p>
         </AlertMessage>
 
-        <div v-if="isUploading || uploadProgress > 0" data-testid="transcribe-progress" class="space-y-2">
+        <div
+          v-if="isUploading || uploadProgress > 0"
+          data-testid="transcribe-progress"
+          class="space-y-2"
+        >
           <div class="flex items-center justify-between text-sm">
             <span class="text-muted-foreground">
               {{ isUploading ? 'Uploading...' : 'Upload complete' }}

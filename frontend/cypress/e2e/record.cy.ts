@@ -28,64 +28,71 @@ describe('record view', () => {
       });
     }).as('saveRealtimeTranscript');
 
-    cy.visitAuthenticated('/record', {}, {
-      onBeforeLoad(win) {
-        type RealtimeEvent = {
-          data: {
-            message: string;
-            metadata?: { transcript?: string };
-          };
-        };
-        type E2EWindow = Cypress.AUTWindow & {
-          __VOCALI_E2E_REALTIME__?: {
-            sampleRate: number;
-            createClient: () => {
-              addEventListener: (
-                eventName: 'receiveMessage',
-                listener: (event: RealtimeEvent) => void
-              ) => void;
-              start: () => Promise<void>;
-              stopRecognition: () => Promise<void>;
-              sendAudio: () => void;
+    cy.visitAuthenticated(
+      '/record',
+      {},
+      {
+        onBeforeLoad(win) {
+          type RealtimeEvent = {
+            data: {
+              message: string;
+              metadata?: { transcript?: string };
             };
           };
-        };
+          type E2EWindow = Cypress.AUTWindow & {
+            __VOCALI_E2E_REALTIME__?: {
+              sampleRate: number;
+              createClient: () => {
+                addEventListener: (
+                  eventName: 'receiveMessage',
+                  listener: (event: RealtimeEvent) => void
+                ) => void;
+                start: () => Promise<void>;
+                stopRecognition: () => Promise<void>;
+                sendAudio: () => void;
+              };
+            };
+          };
 
-        let receiveMessageListener: ((event: RealtimeEvent) => void) | undefined;
-        const e2eWindow = win as E2EWindow;
+          let receiveMessageListener: ((event: RealtimeEvent) => void) | undefined;
+          const e2eWindow = win as E2EWindow;
 
-        e2eWindow.__VOCALI_E2E_REALTIME__ = {
-          sampleRate: 16000,
-          createClient: () => ({
-            addEventListener: (_eventName: 'receiveMessage', listener: (event: RealtimeEvent) => void) => {
-              receiveMessageListener = listener;
-            },
-            start: async () => {
-              receiveMessageListener?.({
-                data: {
-                  message: 'AddPartialTranscript',
-                  metadata: { transcript: 'Hello...' },
-                },
-              });
-              receiveMessageListener?.({
-                data: {
-                  message: 'AddTranscript',
-                  metadata: { transcript: 'Hello from Cypress' },
-                },
-              });
-            },
-            stopRecognition: async () => {
-              receiveMessageListener?.({
-                data: {
-                  message: 'EndOfTranscript',
-                },
-              });
-            },
-            sendAudio: () => undefined,
-          }),
-        };
-      },
-    });
+          e2eWindow.__VOCALI_E2E_REALTIME__ = {
+            sampleRate: 16000,
+            createClient: () => ({
+              addEventListener: (
+                _eventName: 'receiveMessage',
+                listener: (event: RealtimeEvent) => void
+              ) => {
+                receiveMessageListener = listener;
+              },
+              start: async () => {
+                receiveMessageListener?.({
+                  data: {
+                    message: 'AddPartialTranscript',
+                    metadata: { transcript: 'Hello...' },
+                  },
+                });
+                receiveMessageListener?.({
+                  data: {
+                    message: 'AddTranscript',
+                    metadata: { transcript: 'Hello from Cypress' },
+                  },
+                });
+              },
+              stopRecognition: async () => {
+                receiveMessageListener?.({
+                  data: {
+                    message: 'EndOfTranscript',
+                  },
+                });
+              },
+              sendAudio: () => undefined,
+            }),
+          };
+        },
+      }
+    );
 
     cy.get('[data-testid="record-page"]').should('be.visible');
     cy.get('[data-testid="record-start-button"]').click();

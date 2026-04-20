@@ -23,10 +23,7 @@ export const useApi = () => {
     return token;
   };
 
-  const fetch = async <T>(
-    endpoint: string,
-    options: FetchOptions = {}
-  ): Promise<T> => {
+  const fetch = async <T>(endpoint: string, options: FetchOptions = {}): Promise<T> => {
     if (!isConfigured.value) {
       throw new Error('Set NUXT_PUBLIC_API_BASE_URL before making API requests.');
     }
@@ -56,10 +53,7 @@ export const useApi = () => {
     }
   };
 
-  const fetchRaw = async (
-    endpoint: string,
-    options: FetchOptions = {}
-  ): Promise<Response> => {
+  const fetchRaw = async (endpoint: string, options: FetchOptions = {}): Promise<Response> => {
     if (!isConfigured.value) {
       throw new Error('Set NUXT_PUBLIC_API_BASE_URL before making API requests.');
     }

@@ -27,11 +27,7 @@ const handleLogout = async () => {
     <div class="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
       <header class="mb-8 flex items-center justify-between border-b border-border pb-6">
         <NuxtLink to="/" class="flex items-center gap-2">
-          <img
-            src="/Vocali-logo.svg"
-            alt="Vocali"
-            class="h-8 w-auto"
-          >
+          <img src="/Vocali-logo.svg" alt="Vocali" class="h-8 w-auto" />
         </NuxtLink>
 
         <nav class="flex items-center gap-2">
@@ -39,12 +35,7 @@ const handleLogout = async () => {
             <Button variant="ghost" as-child>
               <NuxtLink to="/dashboard">Dashboard</NuxtLink>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              :disabled="logoutPending"
-              @click="handleLogout"
-            >
+            <Button variant="ghost" size="icon" :disabled="logoutPending" @click="handleLogout">
               <LogOut class="h-4 w-4" />
             </Button>
           </template>

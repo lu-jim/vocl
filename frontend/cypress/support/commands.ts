@@ -52,7 +52,11 @@ Cypress.Commands.add('loginBySession', (overrides: Partial<E2EAuthState> = {}) =
 
 Cypress.Commands.add(
   'visitAuthenticated',
-  (path: string, overrides: Partial<E2EAuthState> = {}, options: Partial<Cypress.VisitOptions> = {}) => {
+  (
+    path: string,
+    overrides: Partial<E2EAuthState> = {},
+    options: Partial<Cypress.VisitOptions> = {}
+  ) => {
     const authState = buildAuthState(overrides);
 
     cy.loginBySession(authState);

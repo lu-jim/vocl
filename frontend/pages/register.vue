@@ -88,9 +88,10 @@ const handleSubmit = async () => {
   } catch (error) {
     submitState.value = {
       status: 'error',
-      message: error instanceof Error
-        ? error.message
-        : 'Unable to create your account right now. Please try again.',
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Unable to create your account right now. Please try again.',
     };
   }
 };
@@ -101,9 +102,7 @@ const handleSubmit = async () => {
     <!-- Left: Info -->
     <div class="space-y-6">
       <div class="space-y-4">
-        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Create your account
-        </h1>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Create your account</h1>
         <p class="text-muted-foreground">
           Register to upload audio, request transcriptions, and keep track of your transcription
           history from one place.
@@ -193,7 +192,13 @@ const handleSubmit = async () => {
 
           <AlertMessage
             v-if="submitState"
-            :variant="submitState.status === 'error' ? 'error' : submitState.status === 'confirm' ? 'warning' : 'success'"
+            :variant="
+              submitState.status === 'error'
+                ? 'error'
+                : submitState.status === 'confirm'
+                  ? 'warning'
+                  : 'success'
+            "
           >
             {{ submitState.message }}
           </AlertMessage>

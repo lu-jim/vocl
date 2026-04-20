@@ -47,16 +47,8 @@ type E2EAuthState = {
 const E2E_AUTH_STORAGE_KEY = 'vocali:e2e-auth';
 let loadUserPromise: Promise<AuthUser | null> | null = null;
 
-const isCypressRuntime = () => {
+const parseE2EAuthFromStorage = (): E2EAuthState | null => {
   if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return 'Cypress' in window;
-};
-
-const readE2EAuthState = (): E2EAuthState | null => {
-  if (!isCypressRuntime()) {
     return null;
   }
 
@@ -84,19 +76,6 @@ const readE2EAuthState = (): E2EAuthState | null => {
   }
 };
 
-const writeE2EAuthState = (authState: E2EAuthState | null) => {
-  if (!isCypressRuntime()) {
-    return;
-  }
-
-  if (!authState) {
-    window.localStorage.removeItem(E2E_AUTH_STORAGE_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(E2E_AUTH_STORAGE_KEY, JSON.stringify(authState));
-};
-
 const getAuthConfigStatus = () => {
   const config = useRuntimeConfig();
 
@@ -116,11 +95,42 @@ const getErrorMessage = (error: unknown) => {
 };
 
 export const useAuth = () => {
+  const runtimeConfig = useRuntimeConfig();
+
+  const isE2EMode = () => {
+    const flag = runtimeConfig.public.e2e;
+    return flag === true || flag === 'true';
+  };
+
+  const readE2EAuthState = (): E2EAuthState | null => {
+    if (!isE2EMode()) {
+      return null;
+    }
+
+    return parseE2EAuthFromStorage();
+  };
+
+  const writeE2EAuthState = (authState: E2EAuthState | null) => {
+    if (!isE2EMode() || typeof window === 'undefined') {
+      return;
+    }
+
+    if (!authState) {
+      window.localStorage.removeItem(E2E_AUTH_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(E2E_AUTH_STORAGE_KEY, JSON.stringify(authState));
+  };
+
   const isConfigured = useState<boolean>('auth:isConfigured', () => getAuthConfigStatus());
   const user = useState<AuthUser | null>('auth:user', () => null);
   const status = useState<AuthStatus>('auth:status', () => 'idle');
   const isLoading = useState<boolean>('auth:isLoading', () => false);
-  const hasResolvedInitialSession = useState<boolean>('auth:hasResolvedInitialSession', () => false);
+  const hasResolvedInitialSession = useState<boolean>(
+    'auth:hasResolvedInitialSession',
+    () => false
+  );
   const lastError = useState<string | null>('auth:lastError', () => null);
   const pendingConfirmationEmail = useState<string | null>(
     'auth:pendingConfirmationEmail',
@@ -182,7 +192,7 @@ export const useAuth = () => {
     loadUserPromise = (async () => {
       const e2eAuthState = readE2EAuthState();
 
-      if (isCypressRuntime()) {
+      if (isE2EMode()) {
         hasResolvedInitialSession.value = true;
         return applyE2EAuthState(e2eAuthState);
       }
@@ -311,7 +321,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      if (isCypressRuntime()) {
+      if (isE2EMode()) {
         const authState: E2EAuthState = {
           userId: 'cypress-user-id',
           username: email,
@@ -366,7 +376,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      if (isCypressRuntime()) {
+      if (isE2EMode()) {
         writeE2EAuthState(null);
         return;
       }
@@ -385,7 +395,7 @@ export const useAuth = () => {
 
     const e2eAuthState = readE2EAuthState();
 
-    if (isCypressRuntime()) {
+    if (isE2EMode()) {
       return e2eAuthState?.idToken ?? null;
     }
 
