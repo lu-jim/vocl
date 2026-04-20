@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div data-testid="history-page" class="space-y-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <PageHeader
         title="Transcription History"
@@ -188,6 +188,7 @@ onBeforeUnmount(() => {
       />
       <div class="flex items-center gap-2">
         <Button
+          data-testid="history-refresh-button"
           variant="outline"
           size="sm"
           :disabled="isLoading"
@@ -202,11 +203,11 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <AlertMessage v-if="errorMessage" variant="error">
+    <AlertMessage v-if="errorMessage" data-testid="history-error" variant="error">
       {{ errorMessage }}
     </AlertMessage>
 
-    <AlertMessage v-if="successMessage" variant="success">
+    <AlertMessage v-if="successMessage" data-testid="history-success" variant="success">
       {{ successMessage }}
     </AlertMessage>
 
@@ -219,14 +220,14 @@ onBeforeUnmount(() => {
       </CardHeader>
 
       <CardContent class="p-0">
-        <div v-if="isLoading && paginatedItems.length === 0" class="py-12 text-center">
+        <div v-if="isLoading && paginatedItems.length === 0" data-testid="history-loading" class="py-12 text-center">
           <p class="font-medium">Loading your history...</p>
           <p class="mt-1 text-sm text-muted-foreground">
             Fetching upload records linked to your account.
           </p>
         </div>
 
-        <div v-else-if="paginatedItems.length === 0" class="py-12 text-center">
+        <div v-else-if="paginatedItems.length === 0" data-testid="history-empty" class="py-12 text-center">
           <p class="font-medium">No uploads yet</p>
           <p class="mt-1 text-sm text-muted-foreground">
             Upload an audio file to create your first history entry.
@@ -240,6 +241,7 @@ onBeforeUnmount(() => {
           <div
             v-for="item in paginatedItems"
             :key="item.transcriptionId"
+            :data-testid="`history-row-${item.transcriptionId}`"
             class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
           >
             <div class="space-y-1">
@@ -255,6 +257,7 @@ onBeforeUnmount(() => {
 
             <div class="flex flex-wrap gap-2">
               <Button
+                :data-testid="`history-view-${item.transcriptionId}`"
                 variant="outline"
                 size="sm"
                 :disabled="item.status !== 'completed' || Boolean(transcriptActionId)"
@@ -264,6 +267,7 @@ onBeforeUnmount(() => {
                 View
               </Button>
               <Button
+                :data-testid="`history-download-${item.transcriptionId}`"
                 variant="outline"
                 size="sm"
                 :disabled="item.status !== 'completed' || Boolean(transcriptActionId)"
@@ -274,6 +278,7 @@ onBeforeUnmount(() => {
               </Button>
               <Button
                 v-if="item.status === 'uploaded'"
+                :data-testid="`history-transcribe-${item.transcriptionId}`"
                 size="sm"
                 :disabled="Boolean(transcriptionInFlightId)"
                 @click="startTranscription(item)"
@@ -288,6 +293,7 @@ onBeforeUnmount(() => {
 
       <CardFooter class="flex items-center justify-between border-t">
         <Button
+          data-testid="history-previous-button"
           variant="outline"
           size="sm"
           :disabled="!hasPreviousPage"
@@ -302,6 +308,7 @@ onBeforeUnmount(() => {
         </span>
 
         <Button
+          data-testid="history-next-button"
           variant="outline"
           size="sm"
           :disabled="!hasNextPage"
@@ -315,6 +322,7 @@ onBeforeUnmount(() => {
 
     <div
       v-if="transcriptModal"
+      data-testid="history-transcript-modal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       @click.self="transcriptModal = null"
     >
@@ -324,7 +332,7 @@ onBeforeUnmount(() => {
             <CardTitle>Transcript preview</CardTitle>
             <CardDescription>{{ transcriptModal.filename }}</CardDescription>
           </div>
-          <Button variant="ghost" size="icon" @click="transcriptModal = null">
+          <Button data-testid="history-transcript-close" variant="ghost" size="icon" @click="transcriptModal = null">
             <X class="h-4 w-4" />
           </Button>
         </CardHeader>

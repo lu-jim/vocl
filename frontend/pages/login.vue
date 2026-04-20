@@ -65,7 +65,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
+  <div data-testid="login-page" class="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
     <Card>
       <CardHeader>
         <div class="mb-2">
@@ -91,12 +91,13 @@ const handleSubmit = async () => {
           </p>
         </AlertMessage>
 
-        <form class="space-y-4" @submit.prevent="handleSubmit">
+        <form data-testid="login-form" class="space-y-4" @submit.prevent="handleSubmit">
           <div class="space-y-2">
             <label for="email" class="text-sm font-medium">Email</label>
             <Input
               id="email"
               v-model.trim="form.email"
+              data-testid="login-email"
               type="email"
               autocomplete="email"
               required
@@ -117,6 +118,7 @@ const handleSubmit = async () => {
             <Input
               id="password"
               v-model="form.password"
+              data-testid="login-password"
               type="password"
               autocomplete="current-password"
               required
@@ -124,12 +126,13 @@ const handleSubmit = async () => {
             />
           </div>
 
-          <AlertMessage v-if="errorMessage" variant="error">
+          <AlertMessage v-if="errorMessage" data-testid="login-error" variant="error">
             {{ errorMessage }}
           </AlertMessage>
 
           <Button
             type="submit"
+            data-testid="login-submit"
             class="w-full"
             :disabled="isSubmitting || configWarning"
           >

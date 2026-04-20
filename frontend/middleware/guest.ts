@@ -10,11 +10,7 @@ export default defineNuxtRouteMiddleware(async (_to: RouteLocationNormalized) =>
 
   const auth = useAuth();
 
-  if (auth.isLoading.value) {
-    return;
-  }
-
-  if (!auth.isAuthenticated.value) {
+  if (!auth.hasResolvedInitialSession.value && !auth.isLoading.value) {
     await auth.loadUser();
   }
 

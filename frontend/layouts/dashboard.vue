@@ -66,6 +66,7 @@ const isActive = (path: string) => route.path === path;
 
       <!-- Sidebar -->
       <aside
+        data-testid="dashboard-sidebar"
         :class="[
           'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform md:static md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -74,7 +75,11 @@ const isActive = (path: string) => route.path === path;
         <!-- Logo -->
         <div class="flex h-16 items-center border-b border-sidebar-border px-6">
           <NuxtLink to="/dashboard" class="flex items-center gap-2">
-            <span class="text-lg font-semibold text-sidebar-foreground">Vocali</span>
+            <img
+              src="/Vocali-logo.svg"
+              alt="Vocali"
+              class="h-8 w-auto"
+            >
           </NuxtLink>
         </div>
 
@@ -84,6 +89,7 @@ const isActive = (path: string) => route.path === path;
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
+            :data-testid="`nav-link-${item.to.replace('/', '') || 'dashboard'}`"
             :class="[
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
               isActive(item.to)
@@ -115,6 +121,7 @@ const isActive = (path: string) => route.path === path;
               <Button
                 variant="ghost"
                 size="icon"
+                data-testid="sidebar-logout-button"
                 :disabled="logoutPending"
                 @click="handleLogout"
               >
@@ -135,6 +142,18 @@ const isActive = (path: string) => route.path === path;
       <!-- Main content -->
       <main class="flex-1 overflow-auto">
         <div class="mx-auto max-w-5xl px-4 py-8 md:px-8 md:pl-4">
+          <div class="mb-6 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="logout-button"
+              :disabled="logoutPending"
+              @click="handleLogout"
+            >
+              <LogOut class="mr-2 h-4 w-4" />
+              {{ logoutPending ? 'Signing out...' : 'Logout' }}
+            </Button>
+          </div>
           <slot />
         </div>
       </main>

@@ -56,7 +56,7 @@ const tools = [
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div data-testid="dashboard-page" class="space-y-8">
     <!-- Header -->
     <div>
       <p class="text-sm text-muted-foreground">My Workspace</p>

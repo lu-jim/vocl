@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { RealtimeClient as RealtimeClientType, ReceiveMessageEvent } from '@speechmatics/real-time-client';
 import { Mic, Square, Save, Trash2 } from 'lucide-vue-next';
 
 import { LiveWaveform } from '~/components/elevenlabs-ui/live-waveform';
@@ -19,6 +18,23 @@ definePageMeta({
 });
 
 type RecorderState = 'idle' | 'requesting' | 'connecting' | 'recording' | 'stopping';
+type RealtimeMessage = {
+  message: string;
+  metadata?: {
+    transcript?: string;
+  };
+  reason?: string;
+};
+type RealtimeClientLike = {
+  addEventListener: (eventName: 'receiveMessage', listener: (event: { data: RealtimeMessage }) => void) => void;
+  start: (jwt: string, options: unknown) => Promise<unknown>;
+  stopRecognition: (options: { noTimeout: true }) => Promise<unknown>;
+  sendAudio: (buffer: ArrayBufferLike) => void;
+};
+type E2ERealtimeHook = {
+  sampleRate?: number;
+  createClient?: () => RealtimeClientLike;
+};
 
 const api = useApi();
 const { errorMessage, setError, clearMessages } = useMessages();
@@ -43,7 +59,7 @@ const canSave = computed(
     !isSaving.value
 );
 
-let client: RealtimeClientType | null = null;
+let client: RealtimeClientLike | null = null;
 let mediaStream: MediaStream | null = null;
 let audioContext: AudioContext | null = null;
 let sourceNode: MediaStreamAudioSourceNode | null = null;
@@ -69,6 +85,18 @@ const resetRealtimeClient = () => {
   client = null;
 };
 
+const getE2ERealtimeHook = (): E2ERealtimeHook | null => {
+  if (!import.meta.client) {
+    return null;
+  }
+
+  const browserWindow = window as Window & typeof globalThis & {
+    __VOCALI_E2E_REALTIME__?: E2ERealtimeHook;
+  };
+
+  return browserWindow.__VOCALI_E2E_REALTIME__ ?? null;
+};
+
 const fetchRealtimeToken = async () => {
   return await api.fetch<RealtimeTokenResponse>('/realtime/token');
 };
@@ -85,6 +113,12 @@ const saveRealtimeTranscript = async () => {
 };
 
 const setupAudioCapture = async () => {
+  const e2eRealtimeHook = getE2ERealtimeHook();
+
+  if (e2eRealtimeHook?.sampleRate) {
+    return e2eRealtimeHook.sampleRate;
+  }
+
   if (!hasBrowserAudioSupport()) {
     throw new Error('This browser does not expose the microphone APIs required for realtime transcription.');
   }
@@ -132,8 +166,8 @@ const appendFinalTranscript = (transcript: string) => {
   finalTranscripts.value = [...finalTranscripts.value, transcript.trim()];
 };
 
-const attachClientEvents = (realtimeClient: RealtimeClientType) => {
-  realtimeClient.addEventListener('receiveMessage', ({ data }: ReceiveMessageEvent) => {
+const attachClientEvents = (realtimeClient: RealtimeClientLike) => {
+  realtimeClient.addEventListener('receiveMessage', ({ data }: { data: RealtimeMessage }) => {
     if (data.message === 'AddPartialTranscript') {
       partialTranscript.value = data.metadata?.transcript ?? '';
       return;
@@ -169,15 +203,22 @@ const startRecording = async () => {
   sessionMessage.value = 'Creating a realtime session...';
 
   try {
-    const { RealtimeClient } = await import('@speechmatics/real-time-client');
+    const e2eRealtimeHook = getE2ERealtimeHook();
     const session = await fetchRealtimeToken();
     const websocketUrl = new URL(session.websocketUrl);
     const jwt = session.jwt || websocketUrl.searchParams.get('jwt');
     if (!jwt) throw new Error('Realtime session token is missing.');
 
     const sampleRate = await setupAudioCapture();
-
-    client = new RealtimeClient({ url: `${websocketUrl.origin}${websocketUrl.pathname}` });
+    if (e2eRealtimeHook?.createClient) {
+      client = e2eRealtimeHook.createClient();
+    } else {
+      const { RealtimeClient } = await import('@speechmatics/real-time-client');
+      client = new RealtimeClient({ url: `${websocketUrl.origin}${websocketUrl.pathname}` }) as unknown as RealtimeClientLike;
+    }
+    if (!client) {
+      throw new Error('Realtime client could not be created.');
+    }
     attachClientEvents(client);
 
     recorderState.value = 'connecting';
@@ -250,7 +291,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div data-testid="record-page" class="space-y-6">
     <PageHeader
       title="Live Recording"
       description="Record from your microphone and get real-time transcription."
@@ -282,6 +323,7 @@ onBeforeUnmount(() => {
             <div class="flex flex-wrap gap-2">
               <Button
                 v-if="!isRecording && !isStopping"
+                data-testid="record-start-button"
                 :disabled="isBusy || !api.isConfigured.value"
                 @click="startRecording"
               >
@@ -291,6 +333,7 @@ onBeforeUnmount(() => {
 
               <Button
                 v-if="isRecording || isStopping"
+                data-testid="record-stop-button"
                 variant="destructive"
                 :disabled="isStopping"
                 @click="stopRecording"
@@ -300,6 +343,7 @@ onBeforeUnmount(() => {
               </Button>
 
               <Button
+                data-testid="record-clear-button"
                 variant="outline"
                 :disabled="isRecording || isBusy || isStopping"
                 @click="clearTranscript"
@@ -309,11 +353,11 @@ onBeforeUnmount(() => {
               </Button>
             </div>
 
-            <AlertMessage v-if="!api.isConfigured.value" variant="warning">
+            <AlertMessage v-if="!api.isConfigured.value" data-testid="record-config-warning" variant="warning">
               Set <code class="rounded bg-yellow-100 px-1 py-0.5 font-mono text-xs">NUXT_PUBLIC_API_BASE_URL</code> to enable recording.
             </AlertMessage>
 
-            <AlertMessage v-if="errorMessage" variant="error">
+            <AlertMessage v-if="errorMessage" data-testid="record-error" variant="error">
               {{ errorMessage }}
             </AlertMessage>
           </CardContent>
@@ -339,6 +383,7 @@ onBeforeUnmount(() => {
               <label class="text-sm font-medium">Title (optional)</label>
               <Input
                 v-model="saveTitle"
+                data-testid="record-title-input"
                 type="text"
                 maxlength="120"
                 placeholder="Name your transcript"
@@ -354,7 +399,7 @@ onBeforeUnmount(() => {
             <CardDescription>Shows what you're saying in real-time</CardDescription>
           </CardHeader>
           <CardContent>
-            <p class="min-h-16 text-sm text-muted-foreground">
+            <p data-testid="record-partial-transcript" class="min-h-16 text-sm text-muted-foreground">
               {{ partialTranscript || 'Start recording to see live transcription...' }}
             </p>
           </CardContent>
@@ -377,7 +422,10 @@ onBeforeUnmount(() => {
         </CardHeader>
 
         <CardContent class="flex-1">
-          <div class="h-full max-h-96 min-h-48 overflow-auto rounded-lg border border-border bg-muted/30 p-4">
+          <div
+            data-testid="record-final-transcripts"
+            class="h-full max-h-96 min-h-48 overflow-auto rounded-lg border border-border bg-muted/30 p-4"
+          >
             <div v-if="finalTranscripts.length === 0" class="text-sm text-muted-foreground">
               Start a recording session to see finalized transcript segments here.
             </div>
@@ -395,7 +443,7 @@ onBeforeUnmount(() => {
         </CardContent>
 
         <CardFooter>
-          <Button :disabled="!canSave" @click="saveTranscript">
+          <Button data-testid="record-save-button" :disabled="!canSave" @click="saveTranscript">
             <Save class="mr-2 h-4 w-4" />
             {{ isSaving ? 'Saving...' : 'Save to history' }}
           </Button>
