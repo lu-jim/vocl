@@ -1,6 +1,6 @@
-# Vocali
+# Vocl
 
-Vocali is a transcription platform prototype built with a serverless AWS backend and a Nuxt frontend.
+Vocl is a transcription platform prototype built with a serverless AWS backend and a Nuxt frontend.
 
 ## Project goals
 
