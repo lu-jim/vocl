@@ -1,6 +1,6 @@
 # Vocl
 
-Vocl is a transcription platform prototype built with a serverless AWS backend and a Nuxt frontend.
+Vocl is a transcription platform prototype built as a technical challenge for Vocali, featuring a serverless AWS backend and a Nuxt frontend.
 
 ## Project goals
 
