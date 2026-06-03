@@ -183,3 +183,6 @@ The existing template `hello` function can be invoked locally with:
 ```bash
 pnpm --filter backend exec serverless invoke local -f hello --path src/functions/hello/mock.json
 ```
+## Acknowledgments
+
+Special thanks to [Vocali](https://vocali.net) for the technical challenge guidelines that guided the development of this application.
