@@ -103,7 +103,7 @@ onMounted(async () => {
           <!-- Logo -->
           <div class="flex h-16 items-center border-b border-sidebar-border px-6">
             <NuxtLink to="/dashboard" class="flex items-center gap-2">
-              <img src="/Vocali-logo.svg" alt="Vocali" class="h-8 w-auto" />
+              <span class="text-2xl font-bold tracking-tight">VOCL</span>
             </NuxtLink>
           </div>
 

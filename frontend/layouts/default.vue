@@ -29,7 +29,7 @@ const handleLogout = async () => {
       <div class="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
         <header class="mb-8 flex items-center justify-between border-b border-border pb-6">
           <NuxtLink to="/" class="flex items-center gap-2">
-            <img src="/Vocali-logo.svg" alt="Vocali" class="h-8 w-auto" />
+            <span class="text-2xl font-bold tracking-tight">VOCL</span>
           </NuxtLink>
 
           <nav class="flex items-center gap-2">
