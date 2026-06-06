@@ -1,3 +1,12 @@
 packages:
   - backend
   - frontend
+allowBuilds:
+  '@parcel/watcher': true
+  aws-sdk: true
+  cypress: true
+  es5-ext: true
+  esbuild: true
+  serverless: true
+  unrs-resolver: true
+  vue-demi: true
