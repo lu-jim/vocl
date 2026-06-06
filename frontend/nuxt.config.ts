@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: vitePlugins,
   },
-  modules: ['@nuxt/eslint', 'shadcn-nuxt'],
+  modules: ['@nuxt/eslint', 'shadcn-nuxt', '@vercel/analytics'],
   shadcn: {
     prefix: '',
     componentDir: [
